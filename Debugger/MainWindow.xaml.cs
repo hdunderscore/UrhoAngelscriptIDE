@@ -30,8 +30,9 @@ namespace Debugger {
 
         public MainWindow() {
             inst_ = this;
-            Net.DebugClient client = new Net.DebugClient(new Debugger.Debug.SessionData(""));
             errHandler = new ErrorHandler();
+
+            Net.DebugClient client = new Net.DebugClient(new Debugger.Debug.SessionData(""));
             pluginManager = new PluginManager("plugins");
             InitializeComponent();
             AppearanceManager.Current.ThemeSource = AppearanceManager.DarkThemeSource;

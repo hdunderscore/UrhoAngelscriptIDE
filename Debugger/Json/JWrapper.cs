@@ -38,7 +38,17 @@ namespace Debugger.Json {
         JObject rootObject;
         public JObject Object { set { rootObject = value; OnPropertyChanged(); } }
 
+        public object UserData { get; set; }
+
         public string Name {get; set;}
+
+        public JWrapper GetTopMost()
+        {
+            JWrapper cur = this;
+            while (cur != null && cur.Parent != null)
+                cur = cur.Parent;
+            return cur;
+        }
 
         public virtual string GetDotPath() {
             string ret = "";
@@ -143,7 +153,7 @@ namespace Debugger.Json {
             Value = value;
         }
         string value_;
-        public string Value { get { return value_; } set { value_ = value; } }
+        public string Value { get { return value_; } set { value_ = value; OnPropertyChanged("Value"); } }
 
         public override JWrapper ContainsKey(string key) {
             if (value_.Equals(key))

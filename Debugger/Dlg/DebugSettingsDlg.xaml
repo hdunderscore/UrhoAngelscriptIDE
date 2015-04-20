@@ -1,0 +1,10 @@
+﻿<mui:ModernDialog x:Class="Debugger.Dlg.DebugSettingsDlg"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mui="http://firstfloorsoftware.com/ModernUI"
+        Title="Debug Settings" Height="300" Width="300">
+    <StackPanel Orientation="Vertical">
+        <CheckBox Name="chkPlayInterruptSound" Content="Play beep sound on debug interrupt" Checked="{Binding PlayBeepSound}"/>
+        <CheckBox Name="chkUseIDECode" Content="Use IDE data for code analysis" Checked="{Binding UseIDEData}" />
+    </StackPanel>
+</mui:ModernDialog>

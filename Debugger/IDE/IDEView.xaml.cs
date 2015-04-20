@@ -17,6 +17,7 @@ using System.IO;
 using System.Collections.ObjectModel;
 using FirstFloor.ModernUI.Windows.Controls;
 using System.Diagnostics;
+using System.ComponentModel;
 
 namespace Debugger.IDE {
     /// <summary>
@@ -280,41 +281,46 @@ namespace Debugger.IDE {
             }
             IDEProject.inst().CompilerOutput = "";
             IDEProject.inst().CompileErrors.Clear();
+            PluginLib.ICompilerService comp = null;
+
             if (IDEProject.inst().Settings.Compiler != null && IDEProject.inst().Settings.Compiler.Length > 0)
             {
-                PluginLib.ICompilerService comp = PluginManager.inst().Compilers.FirstOrDefault(c => c.Name.Equals(IDEProject.inst().Settings.Compiler));
-                if (comp != null)
-                    comp.CompileFile(IDEProject.inst().Settings.CompilerPath, IDEProject.inst(), ErrorHandler.inst());
-                else
-                {
+                comp = PluginManager.inst().Compilers.FirstOrDefault(c => c.Name.Equals(IDEProject.inst().Settings.Compiler));
+                if (comp == null) {
                     ModernDialog.ShowMessage(String.Format("Unable to find compiler: \"{0}\"", IDEProject.inst().Settings.Compiler), "Error", MessageBoxButton.OK);
                     return;
                 }
             }
             else
             {
-                PluginLib.ICompilerService comp = PluginManager.inst().Compilers.FirstOrDefault();
-                if (comp != null)
-                    comp.CompileFile(IDEProject.inst().Settings.CompilerPath, IDEProject.inst(), ErrorHandler.inst());
-                else
+                comp = PluginManager.inst().Compilers.FirstOrDefault();
+                if (comp == null)
                 {
                     ModernDialog.ShowMessage("No compiler plugins are installed", "Error", MessageBoxButton.OK);
                     return;
                 }
             }
-
-            if (IDEProject.inst().CompileErrors.Count != 0) {
-                Dlg.CompErrDlg dlg = new Dlg.CompErrDlg();
-                dlg.ShowDialog();
-            }
             
-            if (IDEProject.inst().CompileErrors.Count == 0)
-            {
-                foreach (PluginLib.ICompilerService comp in PluginManager.inst().Compilers)
-                    comp.PostCompile(IDEProject.inst().Settings.CompilerPath, IDEProject.inst().Settings.SourceTree, ErrorHandler.inst());
-                Dlg.CompSuccessDlg dlg = new Dlg.CompSuccessDlg();
-                dlg.ShowDialog();
-            }
+            
+            Parago.Windows.ProgressDialogResult result = Parago.Windows.ProgressDialog.Execute(null, "Compiling...", (a,b) => {
+                comp.CompileFile(IDEProject.inst().Settings.CompilerPath, IDEProject.inst(), ErrorHandler.inst());
+
+                MainWindow.inst().Dispatcher.Invoke(delegate() {
+                    if (IDEProject.inst().CompileErrors.Count != 0)
+                    {
+                        Dlg.CompErrDlg dlg = new Dlg.CompErrDlg();
+                        dlg.ShowDialog();
+                    }
+
+                    if (IDEProject.inst().CompileErrors.Count == 0)
+                    {
+                        foreach (PluginLib.ICompilerService c in PluginManager.inst().Compilers)
+                            c.PostCompile(IDEProject.inst().Settings.CompilerPath, IDEProject.inst().Settings.SourceTree, ErrorHandler.inst());
+                        Dlg.CompSuccessDlg dlg = new Dlg.CompSuccessDlg();
+                        dlg.ShowDialog();
+                    }
+                });
+            });
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e) {
@@ -400,6 +406,31 @@ namespace Debugger.IDE {
             {
                 searchResults_.Add(result);
             });
+        }
+
+        private void GridSplitter_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender == splitRightVertical) // Info Tabs
+            {
+                if (ideGrid.ColumnDefinitions[4].Width.Value == 0)
+                    ideGrid.ColumnDefinitions[4].Width = new GridLength(0, GridUnitType.Auto);
+                else
+                    ideGrid.ColumnDefinitions[4].Width = new GridLength(0, GridUnitType.Pixel);
+            }
+            else if (sender == splitLeftVertical) //Files
+            {
+                if (ideGrid.ColumnDefinitions[0].Width.Value == 0)
+                    ideGrid.ColumnDefinitions[0].Width = new GridLength(0, GridUnitType.Auto);
+                else
+                    ideGrid.ColumnDefinitions[0].Width = new GridLength(0, GridUnitType.Pixel);
+            }
+            else if (sender == splitLog) //Log/Errors
+            {
+                if (ideGrid.RowDefinitions[2].Height.Value == 26)
+                    ideGrid.RowDefinitions[2].Height = new GridLength(250, GridUnitType.Pixel);
+                else
+                    ideGrid.RowDefinitions[2].Height = new GridLength(26, GridUnitType.Pixel);
+            }
         }
     }
 }

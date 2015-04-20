@@ -23,6 +23,7 @@ namespace Debugger.Debug {
         JWrapper localJSON_;
         JWrapper localThis_;
         JWrapper globals_;
+        DebuggerSettings settings_;
 
         static SessionData inst_;
 
@@ -31,6 +32,7 @@ namespace Debugger.Debug {
             inst_ = this;
             connection_ = aCon;
             isConnected_ = false;
+            settings_ = DebuggerSettings.LoadSettings();
             callStack_ = new ObservableCollection<Callstack>();
             files_ = new ObservableCollection<FileData>();
             log_ = new ObservableCollection<LogMessage>();
@@ -41,6 +43,8 @@ namespace Debugger.Debug {
             currentSection_ = -1;
             isDebugging_ = false;
         }
+
+        public DebuggerSettings Settings { get { return settings_; } }
 
         bool isDebugging_;
         public bool IsDebugging {

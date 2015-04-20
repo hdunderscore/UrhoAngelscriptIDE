@@ -23,9 +23,9 @@
                                 <MenuItem Header="Add Watch" Click="MenuItem_Click" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>
-                        <TextBlock Text="{Binding Path=Name}" />
+                        <Label Content="{Binding Path=Name}" MouseDoubleClick="Label_MouseDoubleClick" Tag="{Binding}"/>
                         <TextBlock Text=" : " />
-                        <TextBlock Text="{Binding Path=Value}" />
+                        <Label Content="{Binding Path=Value}" MouseDoubleClick="Label_MouseDoubleClick" Tag="{Binding}"/>
                     </StackPanel>
                 </DataTemplate>
             </TreeView.Resources>

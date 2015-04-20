@@ -22,7 +22,7 @@
                 <Separator />
                 <StackPanel Orientation="Horizontal">
                     <Label Content="Address"/>
-                    <TextBox Name="txtAddr" MinWidth="160" Text="localhost:9002"/>
+                    <TextBox Name="txtAddr" MinWidth="160" Text="{Binding ConnectionURI}"/>
                 </StackPanel>
                 <Button Style="{StaticResource StyledButton}" Content="Connect" HorizontalAlignment="Center" Click="onConnect"/>
             </StackPanel>

@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Media;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -32,6 +33,7 @@ namespace Debugger.Net {
         }
 
         public void Connect(string url) {
+            session_.Settings.ConnectionURI = url;
             if (!url.Contains("ws://"))
                 url = "ws://" + url;
             if (socket_ != null) {
@@ -159,6 +161,7 @@ namespace Debugger.Net {
                     JObject array = JObject.Parse(code);
                     MainWindow.inst().Dispatcher.Invoke(delegate() {
                         SessionData.inst().ThisData = new Json.JWrapper("This", array);
+                        SessionData.inst().ThisData.UserData = stackDepth;
                         //Screens.DebugScreen.inst().ThisTree.DataContext = null;
                         Screens.DebugScreen.inst().ThisTree.DataContext = SessionData.inst().ThisData;
                     });
@@ -274,6 +277,9 @@ namespace Debugger.Net {
                         }
                     }
                 } else if (msg.Equals("hitl")) { // "HitLine" current line position
+                    // If we had not already halted then play the beep sound if enabled
+                    if (!session_.IsDebugging && session_.Settings.PlayBeepSound)
+                        SystemSounds.Hand.Play();
                     session_.IsDebugging = true;
                     int sectionId = int.Parse(parts[1]);
                     int line = int.Parse(parts[2]);
@@ -295,7 +301,7 @@ namespace Debugger.Net {
                             Message = JoinStringsWith(parts, 1, " ")
                         });
                     });
-                } else if (msg.Equals("loge")) { // Log Error
+                } else if (msg.Equals("loge") || msg.Equals("erro")) { // Log Error
                     string m = args.Message.Substring(5);
                     MainWindow.inst().Dispatcher.Invoke(delegate() {
                         session_.Log.Add(new LogMessage {
@@ -375,9 +381,19 @@ namespace Debugger.Net {
                 socket_.Send(string.Format("BRKR {0} {1}", sectionID, line));
         }
 
+        public void SetThisValue(string path, string valueStr)
+        {
+            socket_.Send(string.Format("SETT {0}~{1}", path, valueStr));
+        }
+
         public void SetStackValue(string path, string valueStr)
         {
-            socket_.Send(string.Format("SETS {0} {1}", path, valueStr));
+            socket_.Send(string.Format("SETS {0}~{1}", path, valueStr));
+        }
+
+        public void SetGlobalValue(string path, string valueStr)
+        {
+            socket_.Send(string.Format("SETG {0}~{1}", path, valueStr));
         }
 
         public void Save(FileData aData) {

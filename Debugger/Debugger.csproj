@@ -41,6 +41,7 @@
     <Reference Include="ICSharpCode.AvalonEdit">
       <HintPath>..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -75,8 +76,12 @@
     <Compile Include="Controls\JWrapView.xaml.cs">
       <DependentUpon>JWrapView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Debugger\DebuggerSettings.cs" />
     <Compile Include="Dlg\ConfirmDlg.xaml.cs">
       <DependentUpon>ConfirmDlg.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Dlg\DebugSettingsDlg.xaml.cs">
+      <DependentUpon>DebugSettingsDlg.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dlg\ErrorDlg.xaml.cs">
       <DependentUpon>ErrorDlg.xaml</DependentUpon>
@@ -168,6 +173,12 @@
     <Compile Include="Dlg\RenameDlg.xaml.cs">
       <DependentUpon>RenameDlg.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ProgressDlg\ProgressDialog.xaml.cs">
+      <DependentUpon>ProgressDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProgressDlg\ProgressDialogResult.cs" />
+    <Compile Include="ProgressDlg\ProgressDialogSettings.cs" />
+    <Compile Include="ProgressDlg\WindowSettings.cs" />
     <Compile Include="Screens\DebugScreen.xaml.cs">
       <DependentUpon>DebugScreen.xaml</DependentUpon>
     </Compile>
@@ -186,6 +197,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dlg\ConfirmDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dlg\DebugSettingsDlg.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -277,6 +292,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dlg\RenameDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProgressDlg\ProgressDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -112,5 +112,28 @@ namespace Debugger.Screens {
                 }
             }
         }
+
+        private void btnDebugSettings_Click(object sender, RoutedEventArgs e) {
+            Dlg.DebugSettingsDlg dlg = new Dlg.DebugSettingsDlg();
+            dlg.ShowDialog(); // Dialog takes care of itself
+        }
+
+        private void GridSplitter_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender == splitMiddleHorizontal)
+            {
+                if (debugGrid.RowDefinitions[3].Height.Value == 26)
+                    debugGrid.RowDefinitions[3].Height = new GridLength(250, GridUnitType.Pixel);
+                else
+                    debugGrid.RowDefinitions[3].Height = new GridLength(26, GridUnitType.Pixel);
+            }
+            else if (sender == splitMidVertical)
+            {
+                if (debugGrid.ColumnDefinitions[2].Width.Value == 0)
+                    debugGrid.ColumnDefinitions[2].Width = new GridLength(0, GridUnitType.Auto);
+                else
+                    debugGrid.ColumnDefinitions[2].Width = new GridLength(0, GridUnitType.Pixel);
+            }
+        }
     }
 }

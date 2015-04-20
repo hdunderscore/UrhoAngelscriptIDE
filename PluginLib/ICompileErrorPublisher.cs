@@ -9,6 +9,7 @@ namespace PluginLib
     public interface ICompileErrorPublisher
     {
         void PublishError(CompileError error);
+        void PublishWarning(CompileError warning);
         void PushOutput(string text);
     }
 }

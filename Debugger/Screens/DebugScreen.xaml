@@ -15,6 +15,7 @@
         <BitmapImage x:Key="SIImage" UriSource="/Images/dark/appbar.debug.step.into.png" />
         <BitmapImage x:Key="SOutImage" UriSource="/Images/dark/appbar.debug.step.out.png" />
         <BitmapImage x:Key="SOverImage" UriSource="/Images/dark/appbar.debug.step.over.png" />
+        <BitmapImage x:Key="SettingsImage" UriSource="/Images/dark/appbar.tools.png" />
     </UserControl.Resources>
     <UserControl.CommandBindings>
         <CommandBinding Command="me:DebugScreen.ContCmd" />
@@ -47,9 +48,12 @@
             <Button Name="btnStepOut" Style="{StaticResource StyledButton}" Padding="-5" Margin="2" Command="me:DebugScreen.StepOutCmd" ToolTip="Step Out (Shift+F11)">
                 <Image MaxWidth="32" MaxHeight="32" Source="{StaticResource SOutImage}" />
             </Button>
+            <Button Name="btnSettings" Style="{StaticResource StyledButton}" Padding="-5" Margin="2" ToolTip="Debugger Settings" Click="btnDebugSettings_Click">
+                <Image MaxWidth="32" MaxHeight="32" Source="{StaticResource SettingsImage}" />
+            </Button>
         </StackPanel>
             
-        <Grid Grid.Column="1">
+        <Grid Name="debugGrid" Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="6"/>
@@ -84,7 +88,7 @@
         
             <!-- editor in top left-->
             <Editor:EditorTabs x:Name="editTabs" Grid.Column="0" Grid.Row="1"/>
-            <GridSplitter Width="6" Grid.Column="1" Grid.Row="1"/>
+            <GridSplitter Width="6" Grid.Column="1" Grid.Row="1" Name="splitMidVertical" MouseDoubleClick="GridSplitter_MouseDoubleClick"/>
             <TabControl Grid.Column="2" Grid.Row="1">
                 <TabControl.Items>
                     <TabItem Header="Files">
@@ -112,7 +116,7 @@
                 </TabControl.Items>
             </TabControl>
 
-            <GridSplitter Height="6" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3"/>
+            <GridSplitter Height="6" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3" Name="splitMiddleHorizontal" MouseDoubleClick="GridSplitter_MouseDoubleClick"/>
         
             <Grid Grid.ColumnSpan="3" Grid.Column="0" Grid.Row="3">
                 <Grid.ColumnDefinitions>

@@ -41,6 +41,7 @@ namespace Debugger.IDE {
         API.APIDocumentation documentation_;
         Globals intellisenseGlobals_;
         ObservableCollection<PluginLib.CompileError> errors_ = new ObservableCollection<PluginLib.CompileError>();
+        ObservableCollection<PluginLib.CompileError> warnings_ = new ObservableCollection<PluginLib.CompileError>();
         string compileOutput_;
         Docs.DocDatabase docDatabase_;
 
@@ -55,6 +56,8 @@ namespace Debugger.IDE {
         public string CompilerOutput { get { return compileOutput_; } set { compileOutput_ = value; OnPropertyChanged("CompilerOutput"); } }
         [XmlIgnore]
         public ObservableCollection<PluginLib.CompileError> CompileErrors { get { return errors_; } }
+        [XmlIgnore]
+        public ObservableCollection<PluginLib.CompileError> CompileWarnings { get { return warnings_; } }
 
 
         public string ProjectDir { get { return projectDir_; } set { projectDir_ = value; OnPropertyChanged("ProjectDir"); } }
@@ -113,6 +116,14 @@ namespace Debugger.IDE {
             IDEView.inst().Dispatcher.Invoke(delegate()
             {
                 CompileErrors.Add(error);
+            });
+        }
+
+        public void PublishWarning(PluginLib.CompileError error)
+        {
+            IDEView.inst().Dispatcher.Invoke(delegate()
+            {
+                CompileWarnings.Add(error);
             });
         }
 

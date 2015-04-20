@@ -36,5 +36,35 @@ namespace Debugger.Controls {
                 Debugger.Debug.SessionData.inst().AddWatch(watch);
             }
         }
+
+        private void Label_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (Debugger.Net.DebugClient.inst() == null)
+                return;
+            Label lbl = sender as Label;
+            Json.JLeaf wrapper = lbl.Tag as Json.JLeaf;
+            if (wrapper != null)
+            {
+                string newValue = Dlg.InputDlg.Show(String.Format("Set Value of {0}", wrapper.Name), "New Value:", wrapper.Value);
+                if (newValue != null && newValue != wrapper.Value)
+                {
+                    string tildePath = wrapper.GetTildePath();
+                    Json.JWrapper topLevel = wrapper.GetTopMost();
+                    wrapper.Value = newValue;
+                    if (topLevel.Name.Equals("This"))
+                    {
+                        // The userdata int is stored as "Depth" but need the index here
+                        int value = Debug.SessionData.inst().CallStack.Count - 1;
+                        tildePath = String.Format("{0}~{1}", value - ((int)topLevel.UserData), tildePath);
+                        Debugger.Net.DebugClient.inst().SetThisValue(tildePath, newValue);
+                    }
+                    else if (topLevel.Name.Equals("Globals"))
+                    {
+                        Debugger.Net.DebugClient.inst().SetGlobalValue(tildePath, newValue);
+                    } else
+                        Debugger.Net.DebugClient.inst().SetStackValue(tildePath, newValue);
+                }
+            }
+        }
     }
 }

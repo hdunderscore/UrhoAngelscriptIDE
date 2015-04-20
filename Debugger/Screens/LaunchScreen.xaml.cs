@@ -20,7 +20,9 @@ namespace Debugger.Screens {
     public partial class LaunchScreen : UserControl {
         public LaunchScreen() {
             InitializeComponent();
-            Net.DebugClient client = new Net.DebugClient(new Debugger.Debug.SessionData(txtAddr.Text));
+            Net.DebugClient client = new Net.DebugClient(new Debugger.Debug.SessionData(""));
+            txtAddr.DataContext = Debugger.Debug.SessionData.inst().Settings;
+            Debugger.Debug.SessionData.inst().Connection = Debugger.Debug.SessionData.inst().Settings.ConnectionURI;
             foreach (string str in UserData.inst().RecentFiles) {
                 Button tb = new Button { Content = str, Tag = str };
                 tb.Style = this.FindResource("StyledButton") as Style;

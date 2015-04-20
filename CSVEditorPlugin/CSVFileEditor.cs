@@ -13,7 +13,7 @@ namespace CSVEditorPlugin
     {
         public bool CanEditFile(string filePath, string fileExtension)
         {
-            if (fileExtension.Contains("csv"))
+            if (fileExtension.ToLowerInvariant().Equals(".csv"))
                 return true;
             return false;
         }

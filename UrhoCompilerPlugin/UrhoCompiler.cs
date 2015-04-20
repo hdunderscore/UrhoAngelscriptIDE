@@ -66,48 +66,58 @@ namespace UrhoCompilerPlugin
                 string str = "";
                 while ((str = pi.StandardOutput.ReadLine()) != null)
                 {
-                    compileErrorPublisher.PushOutput(str + "\r\n");
+                    bool isError = false;
+                    bool isWarning = false;
                     if (str.Contains("ERROR: "))
-                        str = str.Replace("ERROR: ", "");
-                    if (str.Contains(','))
                     {
-                        int firstColon = 0;
-                        bool colonFond = false;
-                        for (; firstColon < str.Length; ++firstColon)
-                        {
-                            if (str[firstColon] == ':' && colonFond)
-                                break;
-                            else if (str[firstColon] == ':')
-                                colonFond = true;
-                        }
-                        string fileName = str.Substring(0, firstColon);
-                
+                        str = str.Replace("ERROR: ", "");
+                        isError = true;
+                    }
+                    if (str.Contains("WARNING: "))
+                    {
+                        str = str.Replace("WARNING: ", "");
+                        isWarning = true;
+                    }
+                    if (isError || isWarning)
+                    {
+                        string[] words = str.Split(' '); //split on spaces
+                        int colonIndex = words[0].LastIndexOf(':');
+                        string fileName = words[0].Substring(0, colonIndex);
+
                         string part = "";
                         int line = -1;
                         int column = -1;
                         //move to first number
-                        ++firstColon;
-                        for (; firstColon < str.Length; ++firstColon)
+                        ++colonIndex;
+                        for (; colonIndex < str.Length; ++colonIndex)
                         {
-                            if (str[firstColon] == ',')
+                            if (str[colonIndex] == ',')
                             {
                                 if (line == -1)
                                     line = int.Parse(part);
                                 else
                                     column = int.Parse(part);
                             }
-                            if (str[firstColon] == ' ')
+                            if (str[colonIndex] == ' ')
                                 break;
-                            part += str[firstColon];
+                            part += str[colonIndex];
                         }
-                        string msg = str.Substring(firstColon);
+                        string msg = String.Join(" ", words, 1, words.Length - 1); // str.Substring(colonIndex);
                         PluginLib.CompileError error = new PluginLib.CompileError
                         {
                             File = fileName,
                             Line = line,
                             Message = msg
                         };
-                        compileErrorPublisher.PublishError(error);
+                        if (isError)
+                        {
+                            pushedError = true;
+                            compileErrorPublisher.PublishError(error);
+                        }
+                        else
+                        {
+                            compileErrorPublisher.PublishWarning(error);
+                        }
                     }
                 }
             } catch (Exception ex)
