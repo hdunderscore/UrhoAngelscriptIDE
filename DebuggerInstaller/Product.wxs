@@ -31,7 +31,7 @@
 		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
             <Component Id="APP" Guid="ea18b227-517c-427b-aee4-74a5c51e9278">
                 <File Id="APPEXE" Source="../Debugger/Bin/Release/asDevelop.exe" Checksum="yes" KeyPath="yes"/>
-                <File Id="PLUGINLIB" Source="../Debugger/Bin/Release/PluginLib.dll" Checksum="yes" KeyPath="yes"/>
+                <File Id="PLUGINLIB" Source="../Debugger/Bin/Release/PluginLib.dll" Checksum="yes" />
                 <File Id="MUI" Source="../Debugger/Bin/Release/FirstFloor.ModernUI.dll" Checksum="yes" />
                 <File Id="AVALON" Source="../Debugger/Bin/Release/ICSharpCode.AvalonEdit.dll" Checksum="yes" />
                 <File Id="JSON" Source="../Debugger/Bin/Release/Newtonsoft.Json.dll" Checksum="yes" />

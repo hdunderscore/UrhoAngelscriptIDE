@@ -41,7 +41,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UrhoCompiler.cs" />
-    <Compile Include="UrhoIntellisenseBuilder.cs" />
+    <Compile Include="UrhoDumpAPI.cs" />
     <Compile Include="UrhoMassCompiler.cs" />
   </ItemGroup>
   <ItemGroup>

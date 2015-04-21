@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 namespace Debugger.IDE {
     public class FileBaseItem : NamedBaseClass {
         string backingUri_;
-        public FileBaseItem Parent {get;set;}
+        new public FileBaseItem Parent {get;set;}
         public String Path { get { return backingUri_; } set { backingUri_ = value; OnPropertyChanged("Path"); } }
         public virtual void Reset() {
             OnPropertyChanged();

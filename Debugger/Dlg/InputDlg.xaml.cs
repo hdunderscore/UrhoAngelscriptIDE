@@ -25,6 +25,7 @@ namespace Debugger.Dlg {
             dlg.lblPrompt.Content = prompt;
             if (input != null) {
                 dlg.txtInput.Text = input;
+                dlg.txtInput.SelectAll();
             }
             if (dlg.ShowDialog() == true) {
                 return dlg.GetText();

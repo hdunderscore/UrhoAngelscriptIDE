@@ -1,5 +1,4 @@
-﻿using FirstFloor.ModernUI.Presentation;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,13 +13,16 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Debugger.Controls {
+namespace UrhoDocsPlugin
+{
     /// <summary>
     /// Treeview for IDE.API.APIDocumentation nodes and leaves
     /// Three instances are seen in tabs to the right of the UI
     /// </summary>
-    public partial class AltDocViewer : UserControl {
-        public AltDocViewer() {
+    public partial class DocViewer : UserControl
+    {
+        public DocViewer()
+        {
             InitializeComponent();
             tree.PreviewMouseRightButtonDown += tree_PreviewMouseRightButtonDown;
         }
@@ -31,18 +33,23 @@ namespace Debugger.Controls {
         public string[] CommandFormats { get; set; }
         public string[] LowerCommands { get; set; }
 
-        private void tree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+        private void tree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
             TreeViewItem treeViewItem = VisualUpwardSearch(e.OriginalSource as DependencyObject);
-            if (treeViewItem != null) {
+            if (treeViewItem != null)
+            {
                 treeViewItem.Focus();
                 //e.Handled = true;
-                Debugger.IDE.API.APINode nd = treeViewItem.DataContext as Debugger.IDE.API.APINode;
-                if (nd.Context.Count > 0) {
+                API.APINode nd = treeViewItem.DataContext as API.APINode;
+                if (nd.Context.Count > 0)
+                {
                     ContextMenu cmenu = new ContextMenu();
                     TextBlock os = e.OriginalSource as TextBlock;
-                    for (int i = 0; i < nd.Context.Count; ++i) {
+                    for (int i = 0; i < nd.Context.Count; ++i)
+                    {
                         string f = nd.Context[i].Value;
-                        cmenu.Items.Add(new MenuItem {
+                        cmenu.Items.Add(new MenuItem
+                        {
                             Header = nd.Context[i].Key,
                             Command = new RelayCommand(p =>
                             {
@@ -58,7 +65,8 @@ namespace Debugger.Controls {
             }
         }
 
-        static TreeViewItem VisualUpwardSearch(DependencyObject source) {
+        static TreeViewItem VisualUpwardSearch(DependencyObject source)
+        {
             while (source != null && !(source is TreeViewItem))
                 source = VisualTreeHelper.GetParent(source);
 

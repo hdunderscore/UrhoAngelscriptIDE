@@ -24,7 +24,6 @@ namespace Debugger.IDE.Dlg
         public CompSuccessDlg()
         {
             InitializeComponent();
-            BuildDumpActivity.CreateDumps();
         }
     }
 }

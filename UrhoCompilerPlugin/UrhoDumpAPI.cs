@@ -6,26 +6,26 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Debugger.IDE.Activity
+namespace UrhoCompilerPlugin
 {
-
-    /// <summary>
-    /// Invokes the ScriptCompiler to generate documentation and API dumps
-    /// Used after a successful compilation
-    /// 
-    /// The IDBBuilderActivity will respond to the updated dump header and rebuild on its own
-    /// </summary>
-    public class BuildDumpActivity {
-        public static void CreateDumps()
+    public static class UrhoDumpAPI
+    {
+        /// <summary>
+        /// Invokes the ScriptCompiler to generate documentation and API dumps
+        /// Used after a successful compilation
+        /// 
+        /// The IDBBuilderActivity will respond to the updated dump header and rebuild on its own
+        /// </summary>
+        public static void CreateDumps(string path, string sourceTree)
         {
 
             string dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             dir = System.IO.Path.Combine(dir, "bin");
-            string parentDir = System.IO.Directory.GetParent(IDEProject.inst().ProjectDir).ToString();
+            string parentDir = System.IO.Directory.GetParent(path).ToString();
 
             // Check for a source tree
-            if (IDEProject.inst().Settings.SourceTree != null && IDEProject.inst().Settings.SourceTree.Length > 0)
-                parentDir = IDEProject.inst().Settings.SourceTree;
+            if (sourceTree != null && sourceTree.Length > 0)
+                parentDir = sourceTree;
 
             Thread thread = new Thread(delegate()
             {

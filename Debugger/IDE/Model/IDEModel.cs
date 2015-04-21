@@ -20,14 +20,13 @@ namespace Debugger.IDE {
 
 
     [Serializable]
-    public class IDEProject : NamedBaseClass, PluginLib.ICompileErrorPublisher {
+    public class IDEProject : NamedBaseClass, PluginLib.ICompileHelper {
         static IDEProject inst_;
 
         public static IDEProject inst() { return inst_; }
 
         public IDEProject() {
             inst_ = this;
-            documentation_ = new API.APIDocumentation();
             docDatabase_ = new Docs.DocDatabase();
         }
 
@@ -38,7 +37,6 @@ namespace Debugger.IDE {
         List<string> files_ = new List<string>();
         IDESettings settings_;
 
-        API.APIDocumentation documentation_;
         Globals intellisenseGlobals_;
         ObservableCollection<PluginLib.CompileError> errors_ = new ObservableCollection<PluginLib.CompileError>();
         ObservableCollection<PluginLib.CompileError> warnings_ = new ObservableCollection<PluginLib.CompileError>();
@@ -48,8 +46,6 @@ namespace Debugger.IDE {
         [XmlIgnore]
         public Docs.DocDatabase DocDatabase { get { return docDatabase_; } }
 
-        [XmlIgnore]
-        public API.APIDocumentation Documentation { get { return documentation_; } set { documentation_ = value; OnPropertyChanged("Documentation"); } }
         [XmlIgnore]
         public Globals GlobalTypes { get { return intellisenseGlobals_; } set { intellisenseGlobals_ = value; OnPropertyChanged("GlobalTypes"); } }
         [XmlIgnore]
@@ -133,6 +129,17 @@ namespace Debugger.IDE {
             {
                 CompilerOutput += text;
             });
+        }
+
+
+        public string GetProjectDirectory()
+        {
+            return ProjectDir;
+        }
+
+        public string GetProjectSourceTree()
+        {
+            return Settings.SourceTree;
         }
     }
 

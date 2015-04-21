@@ -204,6 +204,18 @@ namespace Debugger.IDE {
         public Dictionary<string, TypeInfo> Properties { get; private set; }
         public List<TypeInfo> TypeInfo { get { return new List<TypeInfo>(Classes.Values); } }
         public List<FunctionInfo> Functions { get; private set; }
+        public List<object> UIView
+        {
+            get
+            {
+                List<object> ret = new List<object>();
+                foreach (string key in Properties.Keys)
+                    ret.Add(new PropInfo { Name = key, Type = Properties[key] });
+                foreach (FunctionInfo fi in Functions)
+                    ret.Add(fi);
+                return ret;
+            }
+        }
     }
 
     /// <summary>

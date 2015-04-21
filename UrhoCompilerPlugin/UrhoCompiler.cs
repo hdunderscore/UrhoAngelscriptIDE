@@ -19,33 +19,7 @@ namespace UrhoCompilerPlugin
     {
         public string Name { get { return "Urho3D Single File"; } }
         
-        [DllImport("kernel32.dll")]
-        static extern bool ReadConsoleW(IntPtr hConsoleInput, [Out] byte[]
-           lpBuffer, uint nNumberOfCharsToRead, out uint lpNumberOfCharsRead,
-           IntPtr lpReserved);
-
-        static string ReadLine(IntPtr handle)
-        {
-            const int bufferSize = 1024;
-            var buffer = new byte[bufferSize];
-
-            uint charsRead = 0;
-
-            ReadConsoleW(handle, buffer, bufferSize, out charsRead, (IntPtr)0);
-            if (charsRead <= 2)
-                return "";
-            // -2 to remove ending \n\r
-            int nc = ((int)charsRead - 2) * 2;
-            var b = new byte[nc];
-            for (var i = 0; i < nc; i++)
-                b[i] = buffer[i];
-
-            var utf8enc = Encoding.UTF8;
-            var unicodeenc = Encoding.Unicode;
-            return utf8enc.GetString(Encoding.Convert(unicodeenc, utf8enc, b));
-        }
-
-        public void CompileFile(string file, PluginLib.ICompileErrorPublisher compileErrorPublisher, PluginLib.IErrorPublisher errorPublisher)
+        public void CompileFile(string file, PluginLib.ICompileHelper compileErrorPublisher, PluginLib.IErrorPublisher errorPublisher)
         {
             try
             {
@@ -64,6 +38,7 @@ namespace UrhoCompilerPlugin
                 pi.WaitForExit();
 
                 string str = "";
+                bool pushedError = false;
                 while ((str = pi.StandardOutput.ReadLine()) != null)
                 {
                     bool isError = false;
@@ -119,6 +94,13 @@ namespace UrhoCompilerPlugin
                             compileErrorPublisher.PublishWarning(error);
                         }
                     }
+                }
+                if (pushedError)
+                    compileErrorPublisher.PushOutput(String.Format("Compiling {0} Failed\r\n", file));
+                else
+                {
+                    compileErrorPublisher.PushOutput(String.Format("Compiling {0} Complete\r\n", file));
+                    UrhoDumpAPI.CreateDumps(compileErrorPublisher.GetProjectDirectory(),compileErrorPublisher.GetProjectSourceTree());
                 }
             } catch (Exception ex)
             {

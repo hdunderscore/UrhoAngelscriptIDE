@@ -12,6 +12,6 @@ namespace PluginLib
     public interface IInfoTab
     {
         string GetTabName();
-        object CreateTabContent(string projectPath);
+        IExternalControlData CreateTabContent(string projectPath);
     }
 }

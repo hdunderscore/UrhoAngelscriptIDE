@@ -13,9 +13,16 @@ namespace UrhoDocsPlugin
             return "Script API";
         }
 
-        public object CreateTabContent(string projectPath)
+        public PluginLib.IExternalControlData CreateTabContent(string projectPath)
         {
-            throw new NotImplementedException();
+            ControlData data = new ControlData();
+            DocViewer view = new DocViewer();
+            // Script API, user problems with the "source tree" in settings can lead to this
+            view.DataContext = Data.inst().APIDocumentation.DocumentNode.Children.FirstOrDefault(p => p.Name.Equals("Scripting API"));
+            if (view.DataContext == null)
+                return null;
+            data.Control = view;
+            return data;
         }
     }
 }

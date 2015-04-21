@@ -13,7 +13,7 @@ namespace PluginLib
     {
         string Name { get; }
 
-        void CompileFile(string file, ICompileErrorPublisher compileErrorPublisher, IErrorPublisher errorPublisher);
+        void CompileFile(string file, ICompileHelper compileErrorPublisher, IErrorPublisher errorPublisher);
 
         /// <summary>
         /// Called after all compilation has completed

@@ -81,19 +81,25 @@ namespace Debugger.IDE {
                 folder_ = new Folder { Path = project_.ProjectDir };
             fileTree.DataContext = folder_;
             objectTree.DataContext = IDEProject.inst();
+            globalsTree.DataContext = IDEProject.inst();
             txtConsole.DataContext = IDEProject.inst();
             gridErrors.DataContext = IDEProject.inst();
             errorTabCount.DataContext = IDEProject.inst();
             stackErrorHeader.DataContext = IDEProject.inst();
 
-            eventsDoc.Tree.DataContext = IDEProject.inst().Documentation.DocumentNode.Children[0];
-            eventsDoc.CommandText = new string[] { "Copy Subscription", "Copy Unsubscription" };
-            eventsDoc.CommandFormats = new string[] {"SubscribeToEvent(\"{0}\",\"Handle{0}\");", "UnsubscribeFromEvent(\"Handle{0}\");" };
-            eventsDoc.LowerText = new string[] { "Copy event getter" };
-            eventsDoc.LowerCommands = new string[] { "eventData[\"{0}\"];" };
-
-            attrDoc.Tree.DataContext = IDEProject.inst().Documentation.DocumentNode.Children[1];
-            scriptDoc.Tree.DataContext = IDEProject.inst().Documentation.DocumentNode.Children[2];
+            foreach (PluginLib.IInfoTab infoTab in PluginManager.inst().InfoTabs)
+            {
+                PluginLib.IExternalControlData data = infoTab.CreateTabContent(IDEProject.inst().ProjectDir);
+                if (data == null)
+                    continue;
+                TabItem item = new TabItem
+                {
+                    Header = infoTab.GetTabName(),
+                    Tag = data,
+                    Content = data.Control
+                };
+                infoTabs.Items.Add(item);
+            }
         }
 
         public void OnNavigatingFrom(FirstFloor.ModernUI.Windows.Navigation.NavigatingCancelEventArgs e) {
@@ -361,6 +367,28 @@ namespace Debugger.IDE {
             pi.Start();
         }
 
+        private void onViewType(object sender, RoutedEventArgs e)
+        {
+            MenuItem item = sender as MenuItem;
+            ContextMenu menu = item.CommandParameter as ContextMenu;
+            PropInfo pi = (menu.PlacementTarget as StackPanel).Tag as PropInfo;
+            leftSideTabs.SelectedItem = classesTab;
+
+            foreach (object o in objectTree.Items)
+            {
+                if (o is TypeInfo)
+                {
+                    if (((TypeInfo)o).Name.Equals(pi.Type.Name))
+                    {
+                        TreeViewItem titem = ((TreeViewItem)objectTree.ItemContainerGenerator.ContainerFromItem(o));
+                        titem.BringIntoView();
+                        titem.IsSelected = true;
+                        return;
+                    }
+                }
+            }
+        }
+
         private void onDocumentClasses(object sender, RoutedEventArgs e)
         {
             MenuItem item = sender as MenuItem;
@@ -377,16 +405,26 @@ namespace Debugger.IDE {
             {
                 // Get the parent treeitem
                 TreeViewItem treeViewItem = VisualUpwardSearch(VisualTreeHelper.GetParent(VisualUpwardSearch(menu.PlacementTarget as DependencyObject)));
-                TypeInfo parentType = treeViewItem.DataContext as TypeInfo;
-                IDEProject.inst().DocDatabase.Document(parentType.Name + "::" + pi.Name);
+                if (treeViewItem == null)
+                    IDEProject.inst().DocDatabase.Document(pi.Name);
+                else
+                {
+                    TypeInfo parentType = treeViewItem.DataContext as TypeInfo;
+                    IDEProject.inst().DocDatabase.Document(parentType.Name + "::" + pi.Name);
+                }
                 return;
             }
             FunctionInfo fi = (menu.PlacementTarget as StackPanel).Tag as FunctionInfo;
             if (fi != null)
             {
                 TreeViewItem treeViewItem = VisualUpwardSearch(VisualTreeHelper.GetParent(VisualUpwardSearch(menu.PlacementTarget as DependencyObject)));
-                TypeInfo parentType = treeViewItem.DataContext as TypeInfo;
-                IDEProject.inst().DocDatabase.Document(parentType.Name + "::" + fi.Name + fi.Inner);
+                if (treeViewItem == null)
+                    IDEProject.inst().DocDatabase.Document(fi.Name + fi.Inner);
+                else
+                {
+                    TypeInfo parentType = treeViewItem.DataContext as TypeInfo;
+                    IDEProject.inst().DocDatabase.Document(parentType.Name + "::" + fi.Name + fi.Inner);
+                }
                 return;
             }
         }
@@ -413,24 +451,64 @@ namespace Debugger.IDE {
             if (sender == splitRightVertical) // Info Tabs
             {
                 if (ideGrid.ColumnDefinitions[4].Width.Value == 0)
-                    ideGrid.ColumnDefinitions[4].Width = new GridLength(0, GridUnitType.Auto);
+                    ideGrid.ColumnDefinitions[4].Width = new GridLength(200, GridUnitType.Pixel);
                 else
                     ideGrid.ColumnDefinitions[4].Width = new GridLength(0, GridUnitType.Pixel);
             }
             else if (sender == splitLeftVertical) //Files
             {
                 if (ideGrid.ColumnDefinitions[0].Width.Value == 0)
-                    ideGrid.ColumnDefinitions[0].Width = new GridLength(0, GridUnitType.Auto);
+                    ideGrid.ColumnDefinitions[0].Width = new GridLength(200, GridUnitType.Pixel);
                 else
                     ideGrid.ColumnDefinitions[0].Width = new GridLength(0, GridUnitType.Pixel);
             }
             else if (sender == splitLog) //Log/Errors
             {
                 if (ideGrid.RowDefinitions[2].Height.Value == 26)
-                    ideGrid.RowDefinitions[2].Height = new GridLength(250, GridUnitType.Pixel);
+                    ideGrid.RowDefinitions[2].Height = new GridLength(200, GridUnitType.Pixel);
                 else
                     ideGrid.RowDefinitions[2].Height = new GridLength(26, GridUnitType.Pixel);
             }
+        }
+
+        private void txtSearchGlobals_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                if (txtSearchGlobals.Text.Trim().Length > 0)
+                {
+                    string searchString = txtSearchGlobals.Text.Trim().ToLower();
+
+                    foreach (object o in objectTree.Items)
+                    {
+                        if (o is PropInfo)
+                        {
+                            if (((PropInfo)o).Name.ToLower().Equals(searchString))
+                            {
+                                TreeViewItem item = ((TreeViewItem)objectTree.ItemContainerGenerator.ContainerFromItem(o));
+                                item.BringIntoView();
+                                item.IsSelected = true;
+                                return;
+                            }
+                        }
+                        else if (o is FunctionInfo)
+                        {
+                            if (((FunctionInfo)o).Name.ToLower().Equals(searchString))
+                            {
+                                TreeViewItem item = ((TreeViewItem)objectTree.ItemContainerGenerator.ContainerFromItem(o));
+                                item.BringIntoView();
+                                item.IsSelected = true;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void txtSearchGlobals_GotFocus(object sender, EventArgs e)
+        {
+            txtSearchGlobals.SelectAll();
         }
     }
 }

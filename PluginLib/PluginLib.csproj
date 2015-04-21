@@ -42,7 +42,7 @@
     <Compile Include="BasePropertyBound.cs" />
     <Compile Include="CompileError.cs" />
     <Compile Include="IBackgroundService.cs" />
-    <Compile Include="ICompileErrorPublisher.cs" />
+    <Compile Include="ICompileHelper.cs" />
     <Compile Include="ICompilerService.cs" />
     <Compile Include="IErrorPublisher.cs" />
     <Compile Include="IExternalControlData.cs" />

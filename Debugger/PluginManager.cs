@@ -111,6 +111,12 @@ namespace Debugger
             }
         }
 
+        public List<PluginLib.IInfoTab> InfoTabs {
+            get {
+                return infoTabs_;
+            }
+        }
+
         public List<PluginLib.ICompilerService> Compilers {
             get {
                 return compilers_;

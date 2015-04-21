@@ -13,9 +13,18 @@ namespace UrhoDocsPlugin
             return "Attributes";
         }
 
-        public object CreateTabContent(string projectPath)
+        public PluginLib.IExternalControlData CreateTabContent(string projectPath)
         {
-            throw new NotImplementedException();
+            ControlData data = new ControlData();
+            DocViewer view = new DocViewer();
+            // Attributes
+            view.DataContext = Data.inst().APIDocumentation.DocumentNode.Children.FirstOrDefault(p => p.Name.Equals("Attribute list"));
+            if (view.DataContext == null)
+                return null;
+            data.Control = view;
+            return data;
         }
     }
+
+    
 }
