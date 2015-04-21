@@ -1,0 +1,121 @@
+﻿<UserControl x:Class="XMLEditor.Views.TreeEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:local="clr-namespace:XMLEditor.Common"
+             xmlns:views="clr-namespace:XMLEditor.Views"
+             xmlns:xmlNS="clr-namespace:System.Xml;assembly=System.Xml"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+              mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300" Name="loaderWindow"  >
+    <UserControl.Resources>
+        <xmlNS:XmlNodeType x:Key="xmlNode">
+
+        </xmlNS:XmlNodeType>
+        <local:AddChildVisibilityConverter x:Key="AddChildVisibilityConverter"/>
+        <local:RemoveChildVisibilityConverter x:Key="RemoveChildVisibilityConverter"/>
+        <local:XmlAttributesToLableConverter x:Key="XmlAttributesToLableConverter"/>
+        <HierarchicalDataTemplate x:Key="NodeTemplate">
+            <StackPanel Orientation="Horizontal">
+                <Label x:Name="text" Content="{Binding Path=Value}"/>
+                <Label Margin="5,0,0,0" Foreground="Lime" Content="{Binding Path=Attributes, Converter={StaticResource XmlAttributesToLableConverter}}" />
+            </StackPanel>
+            <HierarchicalDataTemplate.ItemsSource>
+                <Binding XPath="child::node()" />
+            </HierarchicalDataTemplate.ItemsSource>
+
+            <HierarchicalDataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Path=NodeType}" Value="Text">
+                    <Setter TargetName="text" Property="Content" Value="{Binding Path=Value}"></Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Path=NodeType}" Value="Element">
+                    <Setter TargetName="text" Property="Content" Value="{Binding Path=Name}"></Setter>
+                    <Setter TargetName="text" Property="Foreground" Value="AliceBlue"></Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Path=NodeType}" Value="Comment">
+                    <Setter TargetName="text" Property="Content" Value="Comments"></Setter>
+                </DataTrigger>
+            </HierarchicalDataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+
+
+        <XmlDataProvider x:Key="xmlDataProvider"></XmlDataProvider>
+        <local:TreeViewHeightConverter x:Key="TreeViewHeightConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="25" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Label Content="Search xPath:" Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                <TextBox x:Name="searchTextBox" Text="{Binding Path=SelectedNodeXpath}" Width="500" Height="25" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="3,0,0,0"></TextBox>
+                <Button IsDefault="True" x:Name="searchButton" Content="Search" Height="30" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,0,0,0" Command="{Binding Path=FindElementCommand}" CommandParameter="{Binding Path=SelectedNodeXpath}" ></Button>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1" Margin="0,0,0,0">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6*"></ColumnDefinition>
+                <ColumnDefinition Width="5"></ColumnDefinition>
+                <ColumnDefinition Width="5*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+            <TreeView Name="xmlTreeView" ItemsSource="{Binding Source={StaticResource xmlDataProvider}, XPath=*}"
+                  ItemTemplate= "{StaticResource NodeTemplate}" TreeViewItem.Selected="xmlTreeView_Selected" >
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}">
+                        <EventSetter Event="TreeViewItem.PreviewMouseRightButtonDown" Handler="TreeViewItem_PreviewMouseRightButtonDown"/>
+                        <Setter Property="IsExpanded" Value="True"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+
+            <GridSplitter Grid.Column="1" Height="Auto" Width="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Cursor="SizeWE"/>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="25" />
+                </Grid.RowDefinitions >
+                <ListBox Grid.Row="0" ItemsSource="{Binding Path=SelectedElement.Children}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Vertical" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="{Binding Path=IsSelected}" Margin="2,0,2,0"></CheckBox>
+                                    <TextBlock FontWeight="Bold" TextDecorations="Underline"  FontSize="13" Name="nameText"  Text="{Binding Path=DataModel.Name, Mode=OneWay}" Margin="1,2,1,2" Width="220" />
+                                </StackPanel>
+                                <TextBox TextWrapping="NoWrap" MinWidth="310" Width="310"   Name="valueText" Text="{Binding Path=DataModel.Value}" Margin="5,2,1,2" TextChanged="valueText_TextChanged" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <StackPanel Orientation="Horizontal"  Grid.Row="1" HorizontalAlignment="Center">
+
+                    <Button x:Name="btnAddAttribute" Content="Add"  ToolTip="Add" Margin="5,0,5,0" 
+                            Width="50" Height="25" HorizontalAlignment="Left"  
+                            Command="{Binding Path=SelectedElement.AddAttributeCommand}" Visibility="Collapsed"
+                           CommandParameter="{StaticResource xmlNode}"
+                            ></Button>
+
+                    <Button  x:Name="btnRemoveAttribute"  Content="Remove" ToolTip="Remove" Margin="5,0,5,0" Width="50" Height="25"
+                              Command="{Binding Path=SelectedElement.RemoveChildrenCommand}"
+                             Visibility="{Binding Path=SelectedElement.DataModel, Converter={StaticResource RemoveChildVisibilityConverter}}">
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal" Name="stackValidation">
+                <Label Content="Validation Schema" Margin="3"/>
+                <ComboBox Name="comboSchemas" DisplayMemberPath="Name" />
+                <Button Name="btnValidateSchema" Content="Validate" Click="btnValidateSchema_Click" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -31,6 +31,7 @@ namespace Debugger
         List<PluginLib.IFileEditor> fileServices_ = new List<PluginLib.IFileEditor>();
         List<PluginLib.ICompilerService> compilers_ = new List<PluginLib.ICompilerService>();
         List<PluginLib.IInfoTab> infoTabs_ = new List<PluginLib.IInfoTab>();
+        List<PluginLib.IBackgroundService> backgroundServices_ = new List<PluginLib.IBackgroundService>();
 
         // List of loaded plugins
         List<PluginInfo> assemblies = new List<PluginInfo>();
@@ -81,6 +82,11 @@ namespace Debugger
                                 infoTabs_.Add((PluginLib.IInfoTab)Activator.CreateInstance(t));
                                 plugin.Components.Add(t.Name);
                             }
+                            else if (t.GetInterface("PluginLib.IBackgroundService") != null)
+                            {
+                                backgroundServices_.Add((PluginLib.IBackgroundService)Activator.CreateInstance(t));
+                                plugin.Components.Add(t.Name);
+                            }
                         }
 
                         if (plugin.Components.Count > 0)
@@ -120,6 +126,12 @@ namespace Debugger
         public List<PluginLib.ICompilerService> Compilers {
             get {
                 return compilers_;
+            }
+        }
+
+        public List<PluginLib.IBackgroundService> BackgroundServices {
+            get {
+                return backgroundServices_;
             }
         }
 

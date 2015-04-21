@@ -69,6 +69,9 @@
     </ApplicationDefinition>
     <Compile Include="AvalonExtensions.cs" />
     <Compile Include="BaseClass.cs" />
+    <Compile Include="Controls\ClassTree.xaml.cs">
+      <DependentUpon>ClassTree.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\JWrapView.xaml.cs">
       <DependentUpon>JWrapView.xaml</DependentUpon>
     </Compile>
@@ -112,9 +115,6 @@
     </Compile>
     <Compile Include="IDE\Dlg\CompSuccessDlg.xaml.cs">
       <DependentUpon>CompSuccessDlg.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="IDE\Dlg\NewFileDlg.xaml.cs">
-      <DependentUpon>NewFileDlg.xaml</DependentUpon>
     </Compile>
     <Compile Include="IDE\ErrorLineHighlighter.cs" />
     <Compile Include="IDE\Model\FileModel.cs" />
@@ -182,6 +182,10 @@
     <Compile Include="StringUtils.cs" />
     <Compile Include="StyledButton.cs" />
     <Compile Include="UserData.cs" />
+    <Page Include="Controls\ClassTree.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\JWrapView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -227,10 +231,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="IDE\Dlg\CompSuccessDlg.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="IDE\Dlg\NewFileDlg.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -1,0 +1,49 @@
+﻿<Window x:Class="XMLEditor.Views.AddChildView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        xmlns:converters="clr-namespace:XMLEditor.Common"
+        mc:Ignorable="d" 
+        d:DesignHeight="162" d:DesignWidth="273" Height="250" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" WindowStyle="ToolWindow"
+        Title="Add Xml Node">
+    <Grid Background="Black">
+        <Grid.Resources>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <converters:BoolToVisibilityInverter x:Key="BoolToVisibilityInverter"/>
+            <converters:TextToBoolConverter x:Key="TextToBoolConverter"/>
+        </Grid.Resources>
+        <StackPanel Margin="0,30,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center" VerticalAlignment="Center" >
+                <Label Content="Name" Width="100" Visibility="{Binding ElementName=radioButtonText, Path=IsChecked, Converter={StaticResource BoolToVisibilityInverter}}"></Label>
+                <TextBox FontSize="13" FontWeight="SemiBold" TextWrapping="NoWrap" FontFamily="Verdana" Name="nameText" Margin="5,2,1,2" Width="220"></TextBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center" VerticalAlignment="Center" 
+                          Visibility="{Binding ElementName=radioButtonText, Path=IsChecked, Converter={StaticResource BoolToVisibilityInverter}}">
+                <Label Content="Namespace" Width="100" ></Label>
+                <TextBox FontSize="13" FontWeight="SemiBold" TextWrapping="NoWrap" FontFamily="Verdana" Name="namespaceText" Margin="5,2,1,2" Width="220"></TextBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center" VerticalAlignment="Center" 
+                         Visibility="{Binding ElementName=radioButtonText, Path=IsChecked, Converter={StaticResource BoolToVisibilityInverter}}" 
+                        >
+                <Label Content="Prefix" Width="100" />
+                <TextBox FontSize="13" FontWeight="SemiBold" TextWrapping="NoWrap" FontFamily="Verdana" Name="prefixText" Margin="5,2,1,2" Width="220" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                        Visibility="{Binding ElementName=radioButtonText, Path=IsChecked, Converter={StaticResource BoolToVisibilityInverter}}">
+                <Label Content="Value" Width="100"></Label>
+                <TextBox TextWrapping="NoWrap" Width="220"   Name="valueText"  Margin="5,2,1,2" ></TextBox>
+            </StackPanel>
+            <StackPanel  Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,30,0,0">
+                <RadioButton Content="Element" Height="16" Name="radioButtonElement" />
+                <!--<CheckBox x:Name="checkBoxAttribute" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,10,0" IsChecked="True">Text</CheckBox>-->
+                <RadioButton Content="Attribute" Height="16" Name="radioButtonAttribute" IsChecked="True" />
+                <RadioButton Content="Text" Height="16" Name="radioButtonText" />
+                <Button Content="OK" IsDefault="True" Width="50" Margin="5,0,5,0" Click="OK_Click" IsEnabled="{Binding ElementName=nameText, Path=Text, Converter={StaticResource TextToBoolConverter}}"></Button>
+                <Button Content="Cancel" IsCancel="True" Width="50" Margin="5,0,5,0" Click="Cancel_Click"></Button>
+
+            </StackPanel>
+        </StackPanel>
+
+    </Grid>
+</Window>
