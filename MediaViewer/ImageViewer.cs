@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
 namespace MediaViewer
@@ -48,15 +49,18 @@ namespace MediaViewer
             Image img = sender as Image;
             if (img != null)
             {
-                if (e.Delta > 0)
+                if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
                 {
-                    img.Width += Math.Max(32, Math.Floor((img.Width * 0.01f) * (e.Delta / 60)));
-                    img.Height += Math.Max(32, Math.Floor((img.Height * 0.01f) * (e.Delta / 60)));
-                }
-                else
-                {
-                    img.Width -= Math.Max(32, Math.Floor((img.Width * 0.01f) * (e.Delta / 60)));
-                    img.Height -= Math.Max(32, Math.Floor((img.Height * 0.01f) * (e.Delta / 60)));
+                    if (e.Delta > 0)
+                    {
+                        img.Width = img.Width * 1.1;
+                        img.Height = img.Height * 1.1;
+                    }
+                    else
+                    {
+                        img.Width = img.Width * 0.9;
+                        img.Height = img.Height * 0.9;
+                    }
                 }
             }
         }

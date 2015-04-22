@@ -80,8 +80,21 @@ namespace Debugger.IDE {
             if (folder_ == null)
                 folder_ = new Folder { Path = project_.ProjectDir };
             fileTree.DataContext = folder_;
+            Action<object> searchAction = delegate(object o)
+            {
+                if (o == null)
+                    return;
+                leftSideTabs.SelectedItem = classesTab;
+                objectTree.SelectItemNamed(((PropInfo)o).Type.Name);
+            };
             objectTree.DataContext = IDEProject.inst();
+            objectTree.ItemBinding = new Binding("GlobalTypes.TypeInfo");
+            objectTree.CallOnViewType = searchAction;
+            
             globalsTree.DataContext = IDEProject.inst();
+            globalsTree.CallOnViewType = searchAction;
+            globalsTree.ItemBinding = new Binding("GlobalTypes.UIView");
+
             txtConsole.DataContext = IDEProject.inst();
             gridErrors.DataContext = IDEProject.inst();
             errorTabCount.DataContext = IDEProject.inst();
@@ -232,32 +245,9 @@ namespace Debugger.IDE {
             }, result.Line);
         }
 
-        private void txtSearchClasses_PreviewKeyDown(object sender, KeyEventArgs e) {
-            if (e.Key == Key.Enter) {
-                if (txtSearchClasses.Text.Trim().Length > 0) {
-                    string searchString = txtSearchClasses.Text.Trim().ToLower();
-
-                    foreach (object o in objectTree.Items) {
-                        if (o is TypeInfo) {
-                            if (((TypeInfo)o).Name.ToLower().Equals(searchString)) {
-                                TreeViewItem item = ((TreeViewItem)objectTree.ItemContainerGenerator.ContainerFromItem(o));
-                                item.BringIntoView();
-                                item.IsSelected = true;
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         private void btnSettings_Click(object sender, RoutedEventArgs e) {
             IDESettingsDlg dlg = new IDESettingsDlg();
             dlg.ShowDialog();
-        }
-
-        private void txtSearchClasses_GotFocus(object sender, RoutedEventArgs e) {
-            txtSearchClasses.SelectAll();
         }
 
         private void errorDoubleClick(object sender, MouseEventArgs args) {
@@ -367,77 +357,6 @@ namespace Debugger.IDE {
             pi.Start();
         }
 
-        private void onViewType(object sender, RoutedEventArgs e)
-        {
-            MenuItem item = sender as MenuItem;
-            ContextMenu menu = item.CommandParameter as ContextMenu;
-            PropInfo pi = (menu.PlacementTarget as StackPanel).Tag as PropInfo;
-            leftSideTabs.SelectedItem = classesTab;
-
-            foreach (object o in objectTree.Items)
-            {
-                if (o is TypeInfo)
-                {
-                    if (((TypeInfo)o).Name.Equals(pi.Type.Name))
-                    {
-                        TreeViewItem titem = ((TreeViewItem)objectTree.ItemContainerGenerator.ContainerFromItem(o));
-                        titem.BringIntoView();
-                        titem.IsSelected = true;
-                        return;
-                    }
-                }
-            }
-        }
-
-        private void onDocumentClasses(object sender, RoutedEventArgs e)
-        {
-            MenuItem item = sender as MenuItem;
-            ContextMenu menu = item.CommandParameter as ContextMenu;
-
-            TypeInfo ti = (menu.PlacementTarget as StackPanel).Tag as TypeInfo;
-            if (ti != null)
-            {
-                IDEProject.inst().DocDatabase.Document(ti.Name);
-                return;
-            }
-            PropInfo pi = (menu.PlacementTarget as StackPanel).Tag as PropInfo;
-            if (pi != null)
-            {
-                // Get the parent treeitem
-                TreeViewItem treeViewItem = VisualUpwardSearch(VisualTreeHelper.GetParent(VisualUpwardSearch(menu.PlacementTarget as DependencyObject)));
-                if (treeViewItem == null)
-                    IDEProject.inst().DocDatabase.Document(pi.Name);
-                else
-                {
-                    TypeInfo parentType = treeViewItem.DataContext as TypeInfo;
-                    IDEProject.inst().DocDatabase.Document(parentType.Name + "::" + pi.Name);
-                }
-                return;
-            }
-            FunctionInfo fi = (menu.PlacementTarget as StackPanel).Tag as FunctionInfo;
-            if (fi != null)
-            {
-                TreeViewItem treeViewItem = VisualUpwardSearch(VisualTreeHelper.GetParent(VisualUpwardSearch(menu.PlacementTarget as DependencyObject)));
-                if (treeViewItem == null)
-                    IDEProject.inst().DocDatabase.Document(fi.Name + fi.Inner);
-                else
-                {
-                    TypeInfo parentType = treeViewItem.DataContext as TypeInfo;
-                    IDEProject.inst().DocDatabase.Document(parentType.Name + "::" + fi.Name + fi.Inner);
-                }
-                return;
-            }
-        }
-
-
-        static TreeViewItem VisualUpwardSearch(DependencyObject source)
-        {
-            while (source != null && !(source is TreeViewItem))
-                source = VisualTreeHelper.GetParent(source);
-
-            return source as TreeViewItem;
-        }
-
         public void PublishSearchResult(PluginLib.SearchResult result)
         {
             Dispatcher.Invoke(delegate()
@@ -469,46 +388,6 @@ namespace Debugger.IDE {
                 else
                     ideGrid.RowDefinitions[2].Height = new GridLength(26, GridUnitType.Pixel);
             }
-        }
-
-        private void txtSearchGlobals_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                if (txtSearchGlobals.Text.Trim().Length > 0)
-                {
-                    string searchString = txtSearchGlobals.Text.Trim().ToLower();
-
-                    foreach (object o in objectTree.Items)
-                    {
-                        if (o is PropInfo)
-                        {
-                            if (((PropInfo)o).Name.ToLower().Equals(searchString))
-                            {
-                                TreeViewItem item = ((TreeViewItem)objectTree.ItemContainerGenerator.ContainerFromItem(o));
-                                item.BringIntoView();
-                                item.IsSelected = true;
-                                return;
-                            }
-                        }
-                        else if (o is FunctionInfo)
-                        {
-                            if (((FunctionInfo)o).Name.ToLower().Equals(searchString))
-                            {
-                                TreeViewItem item = ((TreeViewItem)objectTree.ItemContainerGenerator.ContainerFromItem(o));
-                                item.BringIntoView();
-                                item.IsSelected = true;
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void txtSearchGlobals_GotFocus(object sender, EventArgs e)
-        {
-            txtSearchGlobals.SelectAll();
         }
     }
 }
