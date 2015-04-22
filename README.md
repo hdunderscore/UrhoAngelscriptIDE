@@ -14,6 +14,14 @@ FirstFloor.ModernUI included (slightly tweaked)
 * Code editors for the IDE/Debug views need to be consolidated
 * Saving remote files (received from debug server) locally, in the case of debugging the local machine, this is unnecessary as the saving will send the file data over the connection where the debug daemon will save it
 
+# Table of Contents
+
+* [Running the IDE](#running-the-ide)
+* [IDE Functionality](#ide-functionality)
+* [Debugger Functionality](#debugger-functionality)
+* [Plugins](#plugins)
+* [Example Plugins](#example-plugins)
+
 # Running the IDE
 
 After compiling the project, your application directory must contain a "bin" directory in the location of the exe. In this directory place your ScriptCompiler.exe and drop a generated ScriptAPI.dox and if available also a "dump.h" header dump to have intellisense ready without having to compile first.
