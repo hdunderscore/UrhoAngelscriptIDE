@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -140,6 +142,13 @@ namespace Debugger {
             return DeleteFile(path,
                               FileOperationFlags.FOF_NOCONFIRMATION | FileOperationFlags.FOF_NOERRORUI |
                               FileOperationFlags.FOF_SILENT);
+        }
+
+        public static StringReader GetResourceStringReader(string resourceName)
+        {
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+            using (StreamReader reader = new StreamReader(stream))
+                return new StringReader(reader.ReadToEnd());
         }
     }
 }

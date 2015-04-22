@@ -107,7 +107,7 @@ namespace Debugger.IDE.Intellisense {
                         bool okay = true;
                         bool hitSpace = false;
                         while (idx > 0) { //scan backwards to find the typename
-                            if (!char.IsLetter(lineCode[idx]) && lineCode[idx] != ' ' && lineCode[idx] != '@' && lineCode[idx] != '&') {
+                            if (!char.IsLetterOrDigit(lineCode[idx]) && lineCode[idx] != ' ' && lineCode[idx] != '@' && lineCode[idx] != '&') {
                                 okay = false;
                                 ++idx;
                                 break;
@@ -141,7 +141,7 @@ namespace Debugger.IDE.Intellisense {
                     }
                     --line;
                     depth = scanner_.GetBraceDepth(line);
-                } while (depth > 0 && line > 0);
+                } while (depth >= 0 && line > 0);
                 return null;
             }
         }

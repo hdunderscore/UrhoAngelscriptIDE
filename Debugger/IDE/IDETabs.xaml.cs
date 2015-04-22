@@ -26,7 +26,7 @@ namespace Debugger.IDE {
 
         public IDEEditor OpenFile(FileBaseItem aFile, int aLine)
         {
-            if (aFile.Name.Contains(".as"))
+            if (Intellisense.Sources.SourceBuilder.HandlesExtension(System.IO.Path.GetExtension(aFile.Path)))
             {
                 IDEEditor ret = OpenFile(aFile);
                 ret.Editor.TextArea.Caret.Line = aLine;
@@ -38,7 +38,7 @@ namespace Debugger.IDE {
         }
 
         public IDEEditor OpenFile(FileBaseItem aFile) {
-            if (aFile.Name.Contains(".as") || aFile.Name.Contains(".txt"))
+            if (Intellisense.Sources.SourceBuilder.HandlesExtension(System.IO.Path.GetExtension(aFile.Path)))
             {
                 foreach (TabItem item in tabs.Items)
                 {

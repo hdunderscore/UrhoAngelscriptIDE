@@ -125,17 +125,7 @@ namespace Debugger.IDE {
             if (sender is TreeViewItem && ((TreeViewItem)sender).DataContext is FileLeafItem)
             {
                 e.Handled = true;
-                if (item.Path.EndsWith(".as") || item.Path.EndsWith(".txt"))
-                    ideTabs.OpenFile(item);
-                foreach (PluginLib.IFileEditor editor in PluginManager.inst().FileEditors)
-                {
-                    if (editor.CanEditFile(item.Path, System.IO.Path.GetExtension(item.Path)))
-                    {
-                        //\todo create an editing tab of some type here
-                        ideTabs.OpenFile(item);
-                        break;
-                    }
-                }
+                ideTabs.OpenFile(item);
             }
         }
 
@@ -170,8 +160,7 @@ namespace Debugger.IDE {
             ContextMenu menu = item.CommandParameter as ContextMenu;
             FileBaseItem target = (menu.PlacementTarget as StackPanel).Tag as FileBaseItem;
             if (target is FileLeafItem)
-                if (target.Path.EndsWith(".as") || target.Path.EndsWith(".xml") || target.Path.EndsWith(".csv") || target.Path.EndsWith(".txt"))
-                    ideTabs.OpenFile(target);
+                ideTabs.OpenFile(target);
         }
 
         void onRenameFolder(object sender, EventArgs e) {

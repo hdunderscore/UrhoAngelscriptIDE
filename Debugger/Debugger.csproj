@@ -117,6 +117,12 @@
       <DependentUpon>CompSuccessDlg.xaml</DependentUpon>
     </Compile>
     <Compile Include="IDE\ErrorLineHighlighter.cs" />
+    <Compile Include="IDE\Intellisense\IntellisenseSource.cs" />
+    <Compile Include="IDE\Intellisense\Sources\AngelscriptSource.cs" />
+    <Compile Include="IDE\Intellisense\Sources\GLSLSource.cs" />
+    <Compile Include="IDE\Intellisense\Sources\HLSLSource.cs" />
+    <Compile Include="IDE\Intellisense\Sources\SourceBase.cs" />
+    <Compile Include="IDE\Intellisense\Sources\SourceBuilder.cs" />
     <Compile Include="IDE\Model\FileModel.cs" />
     <Compile Include="IDE\IDEDashboard.xaml.cs">
       <DependentUpon>IDEDashboard.xaml</DependentUpon>
@@ -338,6 +344,8 @@
     <AppDesigner Include="Properties\" />
     <EmbeddedResource Include="Resources\Angelscript.xshd" />
     <EmbeddedResource Include="Resources\XML.xshd" />
+    <EmbeddedResource Include="Resources\GLSL.xshd" />
+    <EmbeddedResource Include="Resources\HLSL.xshd" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -431,6 +439,10 @@
     <Resource Include="Images\all\primethod.png" />
     <Resource Include="Images\all\promethod.png" />
     <Resource Include="Images\all\proproperty.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\GLSL.h" />
+    <EmbeddedResource Include="Resources\HLSL.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

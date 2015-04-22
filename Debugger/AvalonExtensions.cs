@@ -1,10 +1,14 @@
 ﻿using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Debugger {
 
@@ -74,6 +78,13 @@ namespace Debugger {
                 text = textEditor.Document.GetText(lineOffset, 1);
             }
             return wordBeforeDot;
+        }
+
+        public static IHighlightingDefinition LoadHighlightingDefinition(string resourceName)
+        {
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+            using (var reader = new XmlTextReader(stream))
+                return HighlightingLoader.Load(reader, HighlightingManager.Instance);
         }
     }
 }

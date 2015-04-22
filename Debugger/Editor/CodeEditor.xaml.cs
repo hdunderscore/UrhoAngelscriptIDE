@@ -34,7 +34,7 @@ namespace Debugger.Editor {
             this.data = aModelData;
             editor.ShowLineNumbers = true;
             editor.Foreground = new SolidColorBrush(Colors.White);
-            editor.SyntaxHighlighting = IDE.IDEEditor.LoadHighlightingDefinition("Debugger.Resources.Angelscript.xshd");
+            editor.SyntaxHighlighting = AvalonExtensions.LoadHighlightingDefinition("Debugger.Resources.Angelscript.xshd");
             editor.Text = data.Code;
             editor.FontFamily = new FontFamily("Consolas");
             editor.TextArea.TextView.CurrentLineBackground = new SolidColorBrush(Colors.LightGray);
