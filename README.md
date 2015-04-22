@@ -23,7 +23,7 @@ The IDE is focused on directories instead of projects/solutions. Select the bin 
 
 Presently only, text, XML, and Angelscript (.as) files may be edited. Angelscript files support intellisense. XML assistance is a WIP pending finishing XSD specs for all Urho3D xml file types.
 
-**Intellisense** requires a successful compilation in order to function, or it will fallback on a default header dump that it will parse for generic Urho3D specific intellisense.
+Intellisense requires a successful compilation in order to function, or it will fallback on a default header dump that it will parse for generic Urho3D specific intellisense.
 
 ### File Tree
 
@@ -71,24 +71,6 @@ Snippet XML example:
     </snippet>
 
 "Options" are presented as checkboxes, and "inputs" as text fields.
-
-### Attributes Browser
-
-The Attributes browser is populated from parsing the Latex output of the scriptcompiler's dump.
-
-The tree consists of entities (Scene/Node/Components) registered to the Urho3D engine and each record contains a list of the attributes registered for it and the attributes type. Right clicking on an attribute will bring up a context menu with options to copy either a "getter" or a "setter" for the attribute selected - which will remove any risk of a typo.
-
-### Events Browser
-
-The events browser is populated from parsing the Latex output of the scriptcompiler's dump.
-
-Events are grouped by Category, Event, Parameters.
-
-Right-clicking on the Event or Parameters will bring a context menu with clipboard options.
-
-In the case of an Event you can copy a template event subcribtion function call, unsubribtion, or generic event handler for the event.
-
-For parameters the only current option is to copy the parameter getter (eventData["ParamName"]).
 
 ### Console Log
 
@@ -181,8 +163,50 @@ After compilation has been completed they will be called again for "PostCompile.
 
 ### IInfoTab plugins
 
-To soon to document.
+Similar in implementation to the IFIleEditor plugins. Main difference is in intent. IFileEditor plugins have a lifecycle wherease an IInfoTab plugin's tab is constructed on application start and then left alone.
 
 ### IBackgroundService plugins
 
 Too soon to document.
+
+# Example Plugins
+
+### Urho3d Compiler (ICompilerService - UrhoCompilerPlugin)
+
+Runs the Urho3D script compiler on the target file to compile. If compilation has succeeded it will then generate the relevant file dumps to be scanned for autocomplete and class information.
+
+### Urho3d Mass Compiler (ICompilerService - UrhoCompilerPlugin)
+
+Runs the Urho3D compiler on all files found in the folder containing the target file. It's primary purpose is bulk compilation and detecting sequencing issues with #includes.
+
+### CSV Editor (IFileEditor - CSVEditor plugin)
+
+Implements the IFileEditor to provide a Datagrid for
+
+### XML Editor (IFileEditor XMLEditor plugin)
+
+Implements http://wpfxmleditor.codeplex.com for general purpose XML DOM editing. XSD schemas may be placed in a schemas folder inside the plugins folder. These schemas will be presented as options to use to perform validation on the xml. 
+
+If the file name (without extension) of a schema matches the name of the root element of the XML file it will be inferred as the "most likely" schema for validating that document. Otherwise, the schema may be manually selected from the list.
+
+### MediaViewer (IFileEditor - MediaViewer plugin)
+
+Provides basic viewing of image files (png, jpg, tga, dds, bmp) and playback of audio files.
+
+### Attributes Browser (IInfoTab - UrhoDocsPlugin)
+
+The Attributes browser is populated from parsing the Latex output of the scriptcompiler's dump.
+
+The tree consists of entities (Scene/Node/Components) registered to the Urho3D engine and each record contains a list of the attributes registered for it and the attributes type. Right clicking on an attribute will bring up a context menu with options to copy either a "getter" or a "setter" for the attribute selected - which will remove any risk of a typo.
+
+### Events Browser (IInfoTab - UrhoDocsPlugin)
+
+The events browser is populated from parsing the Latex output of the scriptcompiler's dump.
+
+Events are grouped by Category, Event, Parameters.
+
+Right-clicking on the Event or Parameters will bring a context menu with clipboard options.
+
+In the case of an Event you can copy a template event subcribtion function call, unsubribtion, or generic event handler for the event.
+
+For parameters the only current option is to copy the parameter getter (eventData["ParamName"]).
