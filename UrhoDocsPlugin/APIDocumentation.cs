@@ -23,7 +23,6 @@ namespace UrhoDocsPlugin.API
         {
             children_ = new ObservableCollection<APINode>();
             content_ = new List<string>();
-            Context = new List<KeyValuePair<string, string>>();
         }
 
         string name_;
@@ -41,7 +40,6 @@ namespace UrhoDocsPlugin.API
             }
         }
 
-        public List<KeyValuePair<string, string>> Context { get; set; }
         ObservableCollection<APINode> children_;
         List<string> content_;
 
@@ -164,32 +162,6 @@ namespace UrhoDocsPlugin.API
                 }
                 //current.Prune();
                 DocumentNode = current;
-
-                foreach (APINode nd in DocumentNode.Children[0].Children)
-                {
-                    foreach (APINode n in nd.Children)
-                    {
-                        n.Context.Add(new KeyValuePair<string, string>("Copy Subscriber", "::SubscribeToEvent(\"{0}\",\"Handle{0}\");"));
-                        n.Context.Add(new KeyValuePair<string, string>("Copy Unsubscriber", "::UnsubscribeFromEvent(\"Handle{0}\");"));
-                        n.Context.Add(new KeyValuePair<string, string>("Copy Handler",
-@"void Handle{0}(StringHash eventType, VariantMap& eventData)
-{{
-}}"));
-                        foreach (APINode l in n.Children)
-                        {
-                            l.Context.Add(new KeyValuePair<string, string>("Copy param getter", "eventData[\"{0}\"]"));
-                        }
-                    }
-                }
-
-                foreach (APINode nd in DocumentNode.Children[1].Children)
-                {
-                    foreach (APINode n in nd.Children)
-                    {
-                        n.Context.Add(new KeyValuePair<string, string>("Copy Getter", "GetAttribute(\"{0}\");"));
-                        n.Context.Add(new KeyValuePair<string, string>("Copy Setter", "SetAttribute(\"{0}\", VALUE);"));
-                    }
-                }
             }
         }
 

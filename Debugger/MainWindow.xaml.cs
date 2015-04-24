@@ -31,6 +31,7 @@ namespace Debugger {
         public MainWindow() {
             inst_ = this;
             errHandler = new ErrorHandler();
+            this.ContentLoader = new ContentLoader();
 
             Net.DebugClient client = new Net.DebugClient(new Debugger.Debug.SessionData(""));
             pluginManager = new PluginManager("plugins");

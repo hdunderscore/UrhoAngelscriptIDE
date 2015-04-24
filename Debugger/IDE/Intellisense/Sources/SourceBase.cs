@@ -19,6 +19,9 @@ namespace Debugger.IDE.Intellisense.Sources
 
         public void EditorKeyUp(ICSharpCode.AvalonEdit.TextEditor editor, DepthScanner scanner, System.Windows.Input.KeyEventArgs e)
         {
+            Globals g = GetGlobals();
+            if (g == null)
+                return;
             // These keys halt and terminate intellisense
             switch (e.Key)
             {

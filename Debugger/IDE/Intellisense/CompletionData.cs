@@ -106,8 +106,9 @@ namespace Debugger.IDE.Intellisense {
         }
 
         public override void Complete(ICSharpCode.AvalonEdit.Editing.TextArea textArea, ICSharpCode.AvalonEdit.Document.ISegment completionSegment, EventArgs insertionRequestEventArgs) {
+            // Removed hard written addition of '(' because it interferes with overload-insight
             if (func_.Inner != null && func_.Inner.Length > 2)
-                textArea.Document.Replace(completionSegment, func_.Name.Trim() + "(");
+                textArea.Document.Replace(completionSegment, func_.Name.Trim());
             else
                 textArea.Document.Replace(completionSegment, text_);
         }

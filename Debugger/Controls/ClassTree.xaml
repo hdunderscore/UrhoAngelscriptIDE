@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:IDE="clr-namespace:Debugger.IDE"
+             xmlns:INTEL="clr-namespace:Debugger.IDE.Intellisense"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <DockPanel>
@@ -13,7 +13,7 @@
         </StackPanel>
         <TreeView Name="objectTree">
             <TreeView.Resources>
-                <HierarchicalDataTemplate DataType="{x:Type IDE:EnumInfo}" ItemsSource="{Binding Values}">
+                <HierarchicalDataTemplate DataType="{x:Type INTEL:EnumInfo}" ItemsSource="{Binding Values}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
                         <Image Source="/Images/all/enum.png" />
                         <TextBlock Text="enum "/>
@@ -25,7 +25,7 @@
                         </StackPanel.ContextMenu>
                     </StackPanel>
                 </HierarchicalDataTemplate>
-                <HierarchicalDataTemplate DataType="{x:Type IDE:TypeInfo}" ItemsSource="{Binding PropertyUI}">
+                <HierarchicalDataTemplate DataType="{x:Type INTEL:TypeInfo}" ItemsSource="{Binding PropertyUI}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
                         <Image Source="/Images/all/class.png" />
                         <TextBlock Text="{Binding Description}"/>
@@ -37,7 +37,7 @@
                         </StackPanel.ContextMenu>
                     </StackPanel>
                 </HierarchicalDataTemplate>
-                <DataTemplate DataType="{x:Type IDE:PropInfo}">
+                <DataTemplate DataType="{x:Type INTEL:PropInfo}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
                         <Image Source="{Binding ImgSource}" />
                         <!--<Image Source="/Images/all/property.png" />-->
@@ -52,7 +52,7 @@
                         </StackPanel.ContextMenu>
                     </StackPanel>
                 </DataTemplate>
-                <DataTemplate DataType="{x:Type IDE:FunctionInfo}">
+                <DataTemplate DataType="{x:Type INTEL:FunctionInfo}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
                         <Image Source="/Images/all/method.png" />
                         <TextBlock Text="{Binding ReturnType.Name}" Margin="5,2" />

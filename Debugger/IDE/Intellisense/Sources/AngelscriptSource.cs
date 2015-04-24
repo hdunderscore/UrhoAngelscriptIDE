@@ -18,6 +18,8 @@ namespace Debugger.IDE.Intellisense.Sources
     {
         public override Globals GetGlobals()
         {
+            if (IDEProject.inst() == null)
+                return null;
             return IDEProject.inst().GlobalTypes;
         }
 

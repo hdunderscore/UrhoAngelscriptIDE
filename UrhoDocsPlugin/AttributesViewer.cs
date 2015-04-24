@@ -22,6 +22,8 @@ namespace UrhoDocsPlugin
             if (view.DataContext == null)
                 return null;
             data.Control = view;
+            view.CommandText = new string[] { "Copy Getter", "Copy Setter"};
+            view.CommandFormats = new string[] { "GetAttribute(\"{0}\");", "SetAttribute(\"{0}\", VALUE);" };
             return data;
         }
     }

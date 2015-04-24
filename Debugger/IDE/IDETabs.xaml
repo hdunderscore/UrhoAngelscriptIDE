@@ -6,6 +6,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
-        <TabControl Name="tabs"></TabControl>
+        <TabControl Name="tabs" ItemsSource="{Binding items}"></TabControl>
     </Grid>
 </UserControl>

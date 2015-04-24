@@ -1,4 +1,5 @@
 ﻿using Debugger.IDE;
+using Debugger.IDE.Intellisense;
 using System;
 using System.Collections;
 using System.Collections.Generic;

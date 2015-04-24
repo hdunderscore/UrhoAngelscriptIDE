@@ -89,9 +89,9 @@ namespace UrhoCompilerPlugin
                             pushedError = true;
                             compileErrorPublisher.PublishError(error);
                         }
-                        else
+                        else if (isWarning)
                         {
-                            compileErrorPublisher.PublishWarning(error);
+                            compileErrorPublisher.PublishError(error);
                         }
                     }
                 }

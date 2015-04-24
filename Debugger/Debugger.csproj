@@ -69,6 +69,7 @@
     </ApplicationDefinition>
     <Compile Include="AvalonExtensions.cs" />
     <Compile Include="BaseClass.cs" />
+    <Compile Include="ContentLoader.cs" />
     <Compile Include="Controls\ClassTree.xaml.cs">
       <DependentUpon>ClassTree.xaml</DependentUpon>
     </Compile>
@@ -117,12 +118,14 @@
       <DependentUpon>CompSuccessDlg.xaml</DependentUpon>
     </Compile>
     <Compile Include="IDE\ErrorLineHighlighter.cs" />
+    <Compile Include="IDE\Intellisense\AngelscriptParser.cs" />
     <Compile Include="IDE\Intellisense\IntellisenseSource.cs" />
     <Compile Include="IDE\Intellisense\Sources\AngelscriptSource.cs" />
     <Compile Include="IDE\Intellisense\Sources\GLSLSource.cs" />
     <Compile Include="IDE\Intellisense\Sources\HLSLSource.cs" />
     <Compile Include="IDE\Intellisense\Sources\SourceBase.cs" />
     <Compile Include="IDE\Intellisense\Sources\SourceBuilder.cs" />
+    <Compile Include="IDE\Intellisense\TypeData.cs" />
     <Compile Include="IDE\Model\FileModel.cs" />
     <Compile Include="IDE\IDEDashboard.xaml.cs">
       <DependentUpon>IDEDashboard.xaml</DependentUpon>
@@ -152,6 +155,7 @@
     <Compile Include="IDE\Intellisense\OverloadProvider.cs" />
     <Compile Include="IDE\Model\Compiling.cs" />
     <Compile Include="IDE\Model\IDEFile.cs" />
+    <Compile Include="IDE\Model\TabModel.cs" />
     <Compile Include="IDE\Snippets\CodeSnippet.cs" />
     <Compile Include="IDE\Snippets\SnippetDlg.xaml.cs">
       <DependentUpon>SnippetDlg.xaml</DependentUpon>

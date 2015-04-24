@@ -37,7 +37,7 @@ namespace Debugger.IDE {
         List<string> files_ = new List<string>();
         IDESettings settings_;
 
-        Globals intellisenseGlobals_;
+        Intellisense.Globals intellisenseGlobals_;
         ObservableCollection<PluginLib.CompileError> errors_ = new ObservableCollection<PluginLib.CompileError>();
         ObservableCollection<PluginLib.CompileError> warnings_ = new ObservableCollection<PluginLib.CompileError>();
         string compileOutput_;
@@ -47,7 +47,7 @@ namespace Debugger.IDE {
         public Docs.DocDatabase DocDatabase { get { return docDatabase_; } }
 
         [XmlIgnore]
-        public Globals GlobalTypes { get { return intellisenseGlobals_; } set { intellisenseGlobals_ = value; OnPropertyChanged("GlobalTypes"); } }
+        public Intellisense.Globals GlobalTypes { get { return intellisenseGlobals_; } set { intellisenseGlobals_ = value; OnPropertyChanged("GlobalTypes"); } }
         [XmlIgnore]
         public string CompilerOutput { get { return compileOutput_; } set { compileOutput_ = value; OnPropertyChanged("CompilerOutput"); } }
         [XmlIgnore]

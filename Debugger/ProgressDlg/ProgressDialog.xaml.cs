@@ -212,7 +212,11 @@ namespace Parago.Windows
         internal static void Execute(Window owner, string label, Action operation, Action<ProgressDialogResult> successOperation, Action<ProgressDialogResult> failureOperation = null, Action<ProgressDialogResult> cancelledOperation = null)
         {
             ProgressDialogResult result = ExecuteInternal(owner, label, operation, null);
-
+            if (result == null && successOperation != null)
+            {
+                successOperation(null);
+                return;
+            }
             if (result.Cancelled && cancelledOperation != null)
                 cancelledOperation(result);
             else if (result.OperationFailed && failureOperation != null)

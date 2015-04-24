@@ -18,6 +18,7 @@ using System.Collections.ObjectModel;
 using FirstFloor.ModernUI.Windows.Controls;
 using System.Diagnostics;
 using System.ComponentModel;
+using Debugger.IDE.Intellisense;
 
 namespace Debugger.IDE {
     /// <summary>
@@ -59,59 +60,76 @@ namespace Debugger.IDE {
         }
 
         public void OnNavigatedTo(FirstFloor.ModernUI.Windows.Navigation.NavigationEventArgs e) {
-            if (IDEProject.inst() == null) {
-                IDEProject.open();
-                System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
-                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
-                    IDEProject.inst().Settings = IDESettings.GetOrCreate(dlg.SelectedPath);
-                    IDEProject.inst().ProjectDir = dlg.SelectedPath;
-                    UserData.inst().AddRecentFile(dlg.SelectedPath);
-                } else {
-                    MainWindow.inst().ContentSource = new Uri("Screens/LaunchScreen.xaml", UriKind.Relative);
-                    IDEProject.inst().destroy();
-                    return;
+            if (e.NavigationType == FirstFloor.ModernUI.Windows.Navigation.NavigationType.New)
+            {
+                if (IDEProject.inst() == null)
+                {
+                    IDEProject.open();
+                    System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+                    if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        IDEProject.inst().Settings = IDESettings.GetOrCreate(dlg.SelectedPath);
+                        IDEProject.inst().ProjectDir = dlg.SelectedPath;
+                        UserData.inst().AddRecentFile(dlg.SelectedPath);
+                    }
+                    else
+                    {
+                        MainWindow.inst().ContentSource = new Uri("Screens/LaunchScreen.xaml", UriKind.Relative);
+                        IDEProject.inst().destroy();
+                        return;
+                    }
+                }
+
+                if (IDEProject.inst() == null)
+                {
+                    project_ = new IDEProject();
+                }
+                else
+                    project_ = IDEProject.inst();
+                if (folder_ == null)
+                    folder_ = new Folder { Path = project_.ProjectDir };
+                if (fileTree.DataContext == null)
+                    fileTree.DataContext = folder_;
+                Action<object> searchAction = delegate(object o)
+                {
+                    if (o == null)
+                        return;
+                    leftSideTabs.SelectedItem = classesTab;
+                    objectTree.SelectItemNamed(((PropInfo)o).Type.Name);
+                };
+                objectTree.DataContext = IDEProject.inst();
+                objectTree.ItemBinding = new Binding("GlobalTypes.TypeInfo");
+                objectTree.CallOnViewType = searchAction;
+
+                globalsTree.DataContext = IDEProject.inst();
+                globalsTree.CallOnViewType = searchAction;
+                globalsTree.ItemBinding = new Binding("GlobalTypes.UIView");
+
+                txtConsole.DataContext = IDEProject.inst();
+                gridErrors.DataContext = IDEProject.inst();
+                errorTabCount.DataContext = IDEProject.inst();
+                stackErrorHeader.DataContext = IDEProject.inst();
+
+                if (infoTabs.Items.Count == 0)
+                {
+                    foreach (PluginLib.IInfoTab infoTab in PluginManager.inst().InfoTabs)
+                    {
+                        PluginLib.IExternalControlData data = infoTab.CreateTabContent(IDEProject.inst().ProjectDir);
+                        if (data == null)
+                            continue;
+                        TabItem item = new TabItem
+                        {
+                            Header = infoTab.GetTabName(),
+                            Tag = data,
+                            Content = data.Control
+                        };
+                        infoTabs.Items.Add(item);
+                    }
                 }
             }
-
-            if (IDEProject.inst() == null) {
-                project_ = new IDEProject();
-            }  else
-                project_ = IDEProject.inst();
-            if (folder_ == null)
-                folder_ = new Folder { Path = project_.ProjectDir };
-            fileTree.DataContext = folder_;
-            Action<object> searchAction = delegate(object o)
+            else
             {
-                if (o == null)
-                    return;
-                leftSideTabs.SelectedItem = classesTab;
-                objectTree.SelectItemNamed(((PropInfo)o).Type.Name);
-            };
-            objectTree.DataContext = IDEProject.inst();
-            objectTree.ItemBinding = new Binding("GlobalTypes.TypeInfo");
-            objectTree.CallOnViewType = searchAction;
-            
-            globalsTree.DataContext = IDEProject.inst();
-            globalsTree.CallOnViewType = searchAction;
-            globalsTree.ItemBinding = new Binding("GlobalTypes.UIView");
-
-            txtConsole.DataContext = IDEProject.inst();
-            gridErrors.DataContext = IDEProject.inst();
-            errorTabCount.DataContext = IDEProject.inst();
-            stackErrorHeader.DataContext = IDEProject.inst();
-
-            foreach (PluginLib.IInfoTab infoTab in PluginManager.inst().InfoTabs)
-            {
-                PluginLib.IExternalControlData data = infoTab.CreateTabContent(IDEProject.inst().ProjectDir);
-                if (data == null)
-                    continue;
-                TabItem item = new TabItem
-                {
-                    Header = infoTab.GetTabName(),
-                    Tag = data,
-                    Content = data.Control
-                };
-                infoTabs.Items.Add(item);
+                infoTabs.Items.Clear();
             }
         }
 

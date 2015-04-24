@@ -41,26 +41,42 @@ namespace UrhoDocsPlugin
                 treeViewItem.Focus();
                 //e.Handled = true;
                 API.APINode nd = treeViewItem.DataContext as API.APINode;
-                if (nd.Context.Count > 0)
+                if (nd.ParentCount >= 3 && CommandText != null && CommandText.Length > 0)
                 {
                     ContextMenu cmenu = new ContextMenu();
                     TextBlock os = e.OriginalSource as TextBlock;
-                    for (int i = 0; i < nd.Context.Count; ++i)
+                    string[] CmdText = null;
+                    string[] FmtText = null;
+                    if (nd.ParentCount == 3)
                     {
-                        string f = nd.Context[i].Value;
-                        cmenu.Items.Add(new MenuItem
-                        {
-                            Header = nd.Context[i].Key,
-                            Command = new RelayCommand(p =>
-                            {
-                                if (os.Text.Contains(":"))
-                                    System.Windows.Clipboard.SetText(string.Format(f, os.Text.Substring(0, os.Text.IndexOf(":")).Trim()));
-                                else
-                                    System.Windows.Clipboard.SetText(string.Format(f, os.Text.Trim()));
-                            })
-                        });
+                        CmdText = CommandText;
+                        FmtText = CommandFormats;
+                    } else if (nd.ParentCount == 4)
+                    {
+                        CmdText = LowerText;
+                        FmtText = LowerCommands;
                     }
-                    treeViewItem.ContextMenu = cmenu;
+
+                    if (CmdText != null && FmtText != null)
+                    {
+                        for (int i = 0; i < CmdText.Length; ++i)
+                        {
+                            int idx = i;
+                            cmenu.Items.Add(new MenuItem
+                            {
+                                Header = CmdText[idx],
+                                Command = new RelayCommand(p =>
+                                {
+                                    string txt = FmtText[idx];
+                                    if (os.Text.Contains(":"))
+                                        System.Windows.Clipboard.SetText(string.Format(txt, os.Text.Substring(0, os.Text.IndexOf(":")).Trim()));
+                                    else
+                                        System.Windows.Clipboard.SetText(string.Format(txt, os.Text.Trim()));
+                                })
+                            });
+                        }
+                        treeViewItem.ContextMenu = cmenu;
+                    }
                 }
             }
         }

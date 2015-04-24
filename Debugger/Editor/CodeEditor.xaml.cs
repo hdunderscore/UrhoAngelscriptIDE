@@ -27,6 +27,8 @@ namespace Debugger.Editor {
         FileData data;
         BreakpointMargin bpMargin;
         Timer t;
+        IDE.Intellisense.IntellisenseSource intelSource;
+        IDE.Intellisense.DepthScanner depthScanner;
 
         public CodeEditor(FileData aModelData) {
             InitializeComponent();
@@ -43,12 +45,40 @@ namespace Debugger.Editor {
             SearchPanel panel = SearchPanel.Install(editor.TextArea);
             aModelData.PropertyChanged += aModelData_PropertyChanged;
 
+            // If using IDE data then give ourselves an IntellisenseSource
+            if (Debug.SessionData.inst().Settings.UseIDEData)
+                intelSource = IDE.Intellisense.Sources.SourceBuilder.GetSourceForExtension(System.IO.Path.GetExtension(aModelData.SectionName));
+
+            depthScanner = new IDE.Intellisense.DepthScanner();
+            depthScanner.Process(editor.Text);
+
             editor.MouseHover += editor_MouseHover;
             editor.TextArea.MouseWheel += editor_MouseWheel;
+            editor.KeyUp += editor_KeyUp;
+            editor.TextChanged += editor_TextChanged;
+
             t = new Timer();
             t.Interval = 250;
             t.Elapsed += t_Elapsed;
             t.Start();
+        }
+
+        void editor_TextChanged(object sender, EventArgs e)
+        {
+            MainWindow.inst().Dispatcher.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+            {
+                IDE.Intellisense.DepthScanner newScan = new IDE.Intellisense.DepthScanner();
+                newScan.Process(editor.Text);
+                depthScanner = newScan;
+            });
+        }
+
+        void editor_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (intelSource != null)
+            {
+                intelSource.EditorKeyUp(editor, depthScanner, e);
+            }
         }
 
         void t_Elapsed(object sender, ElapsedEventArgs e) {

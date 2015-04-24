@@ -47,6 +47,16 @@ namespace XMLEditor.Views
         void TreeEditorView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             ViewModel = e.NewValue as TreeEditorViewModel;
+            List<SchemaModel> schemas = comboSchemas.ItemsSource as List<SchemaModel>;
+            if (schemas != null)
+            {
+                string rootElem = ViewModel.DataModel.DocumentElement.Name;
+                SchemaModel select = schemas.FirstOrDefault(s => s.Name.ToLowerInvariant().Equals(rootElem.ToLowerInvariant()));
+                if (select != null)
+                {
+                    comboSchemas.SelectedItem = select;
+                }
+            }
         }
 
         public TreeEditorViewModel ViewModel
