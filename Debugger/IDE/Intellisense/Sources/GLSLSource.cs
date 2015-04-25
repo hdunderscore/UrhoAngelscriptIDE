@@ -12,15 +12,21 @@ namespace Debugger.IDE.Intellisense.Sources
     public class GLSLSource : SourceBase
     {
         static Globals GLSLGlobals;
+        Globals documentGlobals_;
         public override Globals GetGlobals()
         {
             if (GLSLGlobals == null)
             {
                 //parse and load the GLSL globals
                 ASParser parser = new ASParser();
-                Globals globs = new Globals();
+                Globals globs = new Globals(true);
                 parser.ParseDumpFile(FileOperationAPIWrapper.GetResourceStringReader("Debugger.Resources.GLSL.h"), globs);
                 GLSLGlobals = globs;
+            }
+            if (documentGlobals_ != null)
+            {
+                documentGlobals_.Parent = GLSLGlobals;
+                return documentGlobals_;
             }
             return GLSLGlobals;
         }
@@ -44,6 +50,14 @@ namespace Debugger.IDE.Intellisense.Sources
                         editor.Document.EndUpdate();
                     }
                 })
+            });
+        }
+
+        public override void DocumentChanged(ICSharpCode.AvalonEdit.TextEditor editor, FileBaseItem item)
+        {
+            MainWindow.inst().Dispatcher.Invoke(delegate()
+            {
+                IDEProject.inst().LocalTypes = documentGlobals_ = AngelscriptParser.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
             });
         }
     }

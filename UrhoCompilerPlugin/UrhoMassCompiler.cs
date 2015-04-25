@@ -16,10 +16,19 @@ namespace UrhoCompilerPlugin
     /// </summary>
     public class UrhoMassCompiler : PluginLib.ICompilerService
     {
+        bool pushedError = false;
+        int errorsPushed = 0;
+        PluginLib.ICompileHelper compileErrorPublisher;
+        PluginLib.IErrorPublisher errorPublisher;
+
         public string Name { get { return "Urho3D All Files"; } }
 
         public void CompileFile(string file, PluginLib.ICompileHelper compileErrorPublisher, PluginLib.IErrorPublisher errorPublisher)
         {
+            pushedError = false;
+            this.compileErrorPublisher = compileErrorPublisher;
+            this.errorPublisher = errorPublisher;
+            errorsPushed = 0;
             try
             {
                 string path = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
@@ -38,7 +47,6 @@ namespace UrhoCompilerPlugin
                     compileList.Add(f);
                 }
                 int ct = 0;
-                int errorsPushed = 0;
                 foreach (string f in compileList)
                 {
                     ++ct;
@@ -52,67 +60,18 @@ namespace UrhoCompilerPlugin
                     pi.StartInfo.UseShellExecute = false;
                     pi.StartInfo.CreateNoWindow = true;
                     pi.StartInfo.RedirectStandardOutput = true;
+                    pi.ErrorDataReceived += pi_ErrorDataReceived;
                     pi.Start();
                     pi.WaitForExit();
 
                     string str = "";
-                    bool pushedError = false;
+                    pushedError = false;
                     while ((str = pi.StandardOutput.ReadLine()) != null)
                     {
-                        compileErrorPublisher.PushOutput(str + "\r\n");
-                        bool isError = false;
-                        bool isWarning = false;
-                        if (str.Contains("ERROR: "))
+                        if (UrhoCompiler.ProcessLine(str, compileErrorPublisher, errorPublisher))
                         {
-                            str = str.Replace("ERROR: ", "");
-                            isError = true;
-                        }
-                        if (str.Contains("WARNING: "))
-                        {
-                            str = str.Replace("WARNING: ", "");
-                            isWarning = true;
-                        }
-                        if (isError || isWarning)
-                        {
-                            string[] words = str.Split(' '); //split on spaces
-                            int colonIndex = words[0].LastIndexOf(':');
-                            string fileName = words[0].Substring(0, colonIndex);
-
-                            string part = "";
-                            int line = -1;
-                            int column = -1;
-                            //move to first number
-                            ++colonIndex;
-                            for (; colonIndex < str.Length; ++colonIndex)
-                            {
-                                if (str[colonIndex] == ',')
-                                {
-                                    if (line == -1)
-                                        line = int.Parse(part);
-                                    else
-                                        column = int.Parse(part);
-                                }
-                                if (str[colonIndex] == ' ')
-                                    break;
-                                part += str[colonIndex];
-                            }
-                            string msg = String.Join(" ", words, 1, words.Length - 1); // str.Substring(colonIndex);
-                            PluginLib.CompileError error = new PluginLib.CompileError
-                            {
-                                File = fileName,
-                                Line = line,
-                                Message = msg
-                            };
-                            if (isError)
-                            {
-                                ++errorsPushed;
-                                pushedError = true;
-                                compileErrorPublisher.PublishError(error);
-                            }
-                            else
-                            {
-                                compileErrorPublisher.PublishWarning(error);
-                            }
+                            pushedError = true;
+                            ++errorsPushed;
                         }
                     }
                     if (pushedError) {
@@ -127,6 +86,14 @@ namespace UrhoCompilerPlugin
             catch (Exception ex)
             {
                 errorPublisher.PublishError(ex);
+            }
+        }
+
+        void pi_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (UrhoCompiler.ProcessLine(e.Data, compileErrorPublisher, errorPublisher))
+            {
+                pushedError = true;
             }
         }
 

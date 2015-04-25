@@ -16,15 +16,21 @@ namespace Debugger.IDE.Intellisense.Sources
     public class HLSLSource : SourceBase
     {
         static Globals HLSLGlobals;
+        Globals documentGlobals_;
         public override Globals GetGlobals()
         {
             if (HLSLGlobals == null)
             {
                 //parse and load the HLSL globals
                 ASParser parser = new ASParser();
-                Globals globs = new Globals();
+                Globals globs = new Globals(true);
                 parser.ParseDumpFile(FileOperationAPIWrapper.GetResourceStringReader("Debugger.Resources.HLSL.h"), globs);
                 HLSLGlobals = globs;
+            }
+            if (documentGlobals_ != null)
+            {
+                documentGlobals_.Parent = HLSLGlobals;
+                return documentGlobals_;
             }
             return HLSLGlobals;
         }
@@ -48,6 +54,14 @@ namespace Debugger.IDE.Intellisense.Sources
                         editor.Document.EndUpdate();
                     }
                 })
+            });
+        }
+
+        public override void DocumentChanged(TextEditor editor, FileBaseItem item)
+        {
+            MainWindow.inst().Dispatcher.Invoke(delegate()
+            {
+                IDEProject.inst().LocalTypes = documentGlobals_ = AngelscriptParser.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
             });
         }
     }

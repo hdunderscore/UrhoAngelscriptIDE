@@ -9,7 +9,6 @@ namespace PluginLib
     public interface ICompileHelper
     {
         void PublishError(CompileError error);
-        void PublishWarning(CompileError warning);
         void PushOutput(string text);
         string GetProjectDirectory();
         string GetProjectSourceTree();

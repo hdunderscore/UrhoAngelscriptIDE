@@ -132,6 +132,9 @@
                     <TabItem Name="globalsTab" Header="Globals">
                         <ctrl:ClassTree x:Name="globalsTree" />
                     </TabItem>
+                    <TabItem Name="locals" Header="Local Types">
+                        <ctrl:ClassTree x:Name="localsTree" />
+                    </TabItem>
                 </TabControl>
             </Grid>
 
@@ -165,19 +168,75 @@
                                         <Style TargetType="Image">
                                             <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding CompileErrors.Count}" Value="0">
+                                                <DataTrigger Binding="{Binding CompileErrorCt}" Value="0">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Image.Style>
                                 </Image>
-                                <TextBlock x:Name="errorTabCount" Text="{Binding CompileErrors.Count}" Margin="4,0,4,0" Foreground="{DynamicResource ButtonText}"/>
+                                <TextBlock x:Name="errorTabCount" Text="{Binding CompileErrorCt}" Margin="4,0,4,0" Foreground="{DynamicResource ButtonText}"/>
                                 <TextBlock Text="Errors" Foreground="{DynamicResource ButtonText}"/>
+                                <Image Source="/Images/all/warning.png">
+                                    <!-- show red-X image when there's errors -->
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CompileWarningCt}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                                <TextBlock x:Name="warnTabCount" Text="{Binding CompileWarningCt}" Margin="4,0,4,0" Foreground="{DynamicResource ButtonText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CompileWarningCt}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="Warnings" Foreground="{DynamicResource ButtonText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CompileWarningCt}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
                             </StackPanel>
                         </TabItem.Header>
                         <DataGrid Name="gridErrors" ItemsSource="{Binding CompileErrors}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
                             <DataGrid.Columns>
+                                <DataGridTemplateColumn>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image>
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Source" Value="/Images/all/warning.png" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Value="True" Binding="{Binding IsError}">
+                                                                <Setter Property="Source" Value="/Images/all/error.png" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Line" Binding="{Binding Line}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Error Info" Binding="{Binding Message}" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="File" Binding="{Binding File}" IsReadOnly="True" />

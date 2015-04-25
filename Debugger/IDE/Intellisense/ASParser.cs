@@ -35,21 +35,26 @@ namespace Debugger.IDE.Intellisense {
         }
 
         void _resolveNames(Globals globals) {
-            foreach (string key in globals.Properties.Keys) {
-                if (!globals.Properties[key].IsComplete)
-                    globals.Properties[key] = globals.Classes[globals.Properties[key].Name];
-                if (globals.Properties[key] is TemplateInst) {
-                    TemplateInst ti = globals.Properties[key] as TemplateInst;
-                    if (!ti.WrappedType.IsComplete)
-                        ti.WrappedType = globals.Classes[ti.WrappedType.Name];
+            foreach (string key in globals.GetPropertyNames()) {
+                TypeInfo t = globals.GetProperty(key) as TypeInfo;
+                if (t != null)
+                {
+                    if (!t.IsComplete)
+                        globals.AddProperty(key, globals.GetTypeInfo(t.Name), -1, "");
+                    if (t is TemplateInst)
+                    {
+                        TemplateInst ti = globals.GetProperty(key) as TemplateInst;
+                        if (!ti.WrappedType.IsComplete)
+                            ti.WrappedType = globals.GetTypeInfo(ti.WrappedType.Name);
+                    }
                 }
             }
 
-            foreach (FunctionInfo f in globals.Functions) {
+            foreach (FunctionInfo f in globals.GetFunctions(null)) {
                 f.ResolveIncompletion(globals);
             }
 
-            foreach (TypeInfo type in globals.Classes.Values) {
+            foreach (TypeInfo type in globals.TypeInfo) {
                 type.ResolveIncompletion(globals);
             }
         }
@@ -61,7 +66,7 @@ namespace Debugger.IDE.Intellisense {
                 if (line.StartsWith("/*") || line.StartsWith("//"))
                     continue;
                 else {
-                    globals.Functions.Add(_parseFunction(line, globals));
+                    globals.AddFunction(_parseFunction(line, globals));
                 }
             }
         }
@@ -77,12 +82,12 @@ namespace Debugger.IDE.Intellisense {
                     string pname = parts[0].EndsWith("@") ? parts[0].Substring(0, parts[0].Length - 1) : parts[0]; //handle
                     TypeInfo pType = null;
                     string myname = parts[1];
-                    if (globals.Classes.ContainsKey(pname))
-                        pType = globals.Classes[pname];
+                    if (globals.ContainsTypeInfo(pname))
+                        pType = globals.GetTypeInfo(pname);
                     if (pType == null) { //create temp type to resolve
                         pType = new TypeInfo() { Name = pname, IsComplete = false };
                     }
-                    globals.Properties[myname] = pType;
+                    globals.AddProperty(myname, pType, -1, null);
                 }
             }
         }
@@ -95,7 +100,7 @@ namespace Debugger.IDE.Intellisense {
                 if (line.Equals("};")) {
                     EnumInfo ret = new EnumInfo { Name = enumName };
                     ret.Values.AddRange(enumValues);
-                    globals.Classes[enumName] = ret;
+                    globals.AddTypeInfo(enumName, ret);
                     return;
                 } else if (line.Contains(',')) {
                     int sub = line.IndexOf(',');
@@ -114,7 +119,7 @@ namespace Debugger.IDE.Intellisense {
 
             TypeInfo classInfo = new TypeInfo() { IsTemplate = isTemplate };
             classInfo.Name = classname;
-            globals.Classes[classInfo.Name] = classInfo;
+            globals.AddTypeInfo(classInfo.Name, classInfo);
 
             for (int i = 3; i < nameparts.Length; ++i) { //list bases 2 would be :, 3 will be first basetype
                 classInfo.BaseTypeStr.Add(nameparts[i]); //add a base class
@@ -148,9 +153,10 @@ namespace Debugger.IDE.Intellisense {
                     if (parts[0].Contains('<')) {
                         string templateType = parts[0].Substring(0, parts[0].IndexOf('<'));
                         string containedType = parts[0].Extract('<', '>');
-                        TypeInfo wrapped = globals.Classes.FirstOrDefault(t => t.Key.Equals(containedType)).Value;
+                        TypeInfo wrapped = globals.GetTypeInfo(containedType);
                         TemplateInst ti = new TemplateInst() { Name = templateType, IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = containedType, IsComplete = false } };
                         classInfo.Properties[parts[1]] = ti;
+                        classInfo.PropertyLines[parts[1]] = -1;
                         if (nextReadOnly)
                             classInfo.ReadonlyProperties.Add(parts[1]);
                         else if (nextProtected)
@@ -158,12 +164,13 @@ namespace Debugger.IDE.Intellisense {
                     } else {
                         string pname = parts[0].EndsWith("@") ? parts[0].Substring(0, parts[0].Length - 1) : parts[0]; //handle
                         TypeInfo pType = null;
-                        if (globals.Classes.ContainsKey(pname))
-                            pType = globals.Classes[pname];
+                        if (globals.ContainsTypeInfo(pname))
+                            pType = globals.GetTypeInfo(pname);
                         if (pType == null) { //create temp type to resolve later
                             pType = new TypeInfo() { Name = pname, IsComplete = false };
                         }
                         classInfo.Properties[parts[1]] = pType;
+                        classInfo.PropertyLines[parts[1]] = -1;
                         if (nextReadOnly)
                             classInfo.ReadonlyProperties.Add(parts[1]);
                         else if (nextProtected)
@@ -189,12 +196,12 @@ namespace Debugger.IDE.Intellisense {
             TypeInfo retType = null;
 
             //TODO: split the name parts
-            if (globals.Classes.ContainsKey(nameParts[0])) {
-                retType = globals.Classes[nameParts[0]];
+            if (globals.ContainsTypeInfo(nameParts[0])) {
+                retType = globals.GetTypeInfo(nameParts[0]);
             } else if (nameParts[0].Contains('<')) {
                 string wrappedType = nameParts[0].Extract('<', '>');
                 string templateType = nameParts[0].Replace(string.Format("<{0}>", wrappedType), "");
-                TypeInfo wrapped = globals.Classes.FirstOrDefault(t => t.Key.Equals(wrappedType)).Value;
+                TypeInfo wrapped = globals.GetTypeInfo(wrappedType);
                 TemplateInst ti = new TemplateInst() { Name = nameParts[0], IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = wrappedType, IsComplete = false } };
                 retType = ti;
             } else {

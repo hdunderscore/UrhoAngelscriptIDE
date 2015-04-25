@@ -12,7 +12,7 @@ namespace Debugger.IDE.Intellisense
     {
         Globals GetGlobals();
         void HookEditor(TextEditor editor, FileBaseItem item);
-
+        void DocumentChanged(TextEditor editor, FileBaseItem item);
         void EditorKeyUp(TextEditor editor, DepthScanner depthScanner, KeyEventArgs e);
         void EditorMouseHover(TextEditor editor, DepthScanner depthScanner, MouseEventArgs e);
     }

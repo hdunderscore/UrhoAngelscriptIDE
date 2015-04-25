@@ -10,6 +10,7 @@ namespace Debugger.IDE.Intellisense {
     //Works with DepthScanner data to start from current position,
     //scan lines upwards looking for lines containing the term
     public class NameResolver {
+        static readonly char[] SPACECHAR = { ' ' };
         static readonly char[] BREAKCHARS = { ' ', '.', ',', '*','/','%','(','{','}',')',';','=','[',']','\t','\r','\n'};
         DepthScanner scanner_;
         Globals globals_;
@@ -22,7 +23,7 @@ namespace Debugger.IDE.Intellisense {
         public void GetNameMatch(TextDocument aDoc, int line, string text, ref List<string> suggestions) {
             int depth = scanner_.GetBraceDepth(line);
             do {
-                string[] lineCodes = aDoc.GetText(aDoc.Lines[line]).Split(BREAKCHARS);
+                string[] lineCodes = aDoc.GetText(aDoc.Lines[line]).Split(BREAKCHARS, StringSplitOptions.RemoveEmptyEntries);
                 foreach (string lineCode in lineCodes) {
                     if (lineCode.Length > 3 && lineCode.StartsWith(text)) { //contains our current text
                         int startidx = lineCode.IndexOf(text);
@@ -44,11 +45,11 @@ namespace Debugger.IDE.Intellisense {
                 do {
                     string lineCode = aDoc.GetText(aDoc.Lines[line]);
                     if (lineCode.Contains("class ")) {
-                        string[] parts = lineCode.Trim().Split(' ');
-                        if (parts[0].Equals("shared") && globals_.Classes.ContainsKey(parts[2]))
-                            return globals_.Classes[parts[2]];
-                        else if (globals_.Classes.ContainsKey(parts[1]))
-                            return globals_.Classes[parts[1]];
+                        string[] parts = lineCode.Trim().Split(SPACECHAR, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts[0].Equals("shared") && globals_.ContainsTypeInfo(parts[2]))
+                            return globals_.GetTypeInfo(parts[2]);
+                        else if (globals_.ContainsTypeInfo(parts[1]))
+                            return globals_.GetTypeInfo(parts[1]);
                         else
                             break;
                     }
@@ -58,7 +59,7 @@ namespace Debugger.IDE.Intellisense {
 
                 //unkonwn class
                 int curDepth = depth;
-                string[] nameparts = aDoc.GetText(aDoc.Lines[line]).Trim().Split(' ');
+                string[] nameparts = aDoc.GetText(aDoc.Lines[line]).Trim().Split(SPACECHAR, StringSplitOptions.RemoveEmptyEntries);
                 string className = "";
                 if (nameparts[0].Equals("shared"))
                     className = nameparts[2];
@@ -71,17 +72,17 @@ namespace Debugger.IDE.Intellisense {
                     depth = scanner_.GetBraceDepth(line);
                     if (depth == curDepth+1) {
                         string lineCode = aDoc.GetText(aDoc.Lines[line]);
-                        string[] words = aDoc.GetText(aDoc.Lines[line]).Trim().Split(' ');
+                        string[] words = aDoc.GetText(aDoc.Lines[line]).Trim().Split(SPACECHAR, StringSplitOptions.RemoveEmptyEntries);
                         if (words != null && words.Length > 1) {
                             if (words[1].Contains("(")) { //function
-                                if (globals_.Classes.ContainsKey(words[0])) {
+                                if (globals_.ContainsTypeInfo(words[0])) {
 
                                 }
                             } else {
                                 string rettype = FilterTypeName(words[0]);
                                 string propname = FilterTypeName(words[1]);
-                                if (globals_.Classes.ContainsKey(rettype)) {
-                                    tempType.Properties[propname] = globals_.Classes[rettype];
+                                if (globals_.ContainsTypeInfo(rettype)) {
+                                    tempType.Properties[propname] = globals_.GetTypeInfo(rettype);
                                 }
                             }
                         }
@@ -133,9 +134,9 @@ namespace Debugger.IDE.Intellisense {
                                     substr = substr.Replace("@", "");
                                 }
                             }
-                            if (globals_.Classes.ContainsKey(substr)) {
+                            if (globals_.ContainsTypeInfo(substr)) {
                                 //Found a class
-                                return globals_.Classes[substr];
+                                return globals_.GetTypeInfo(substr);
                             }
                         }
                     }

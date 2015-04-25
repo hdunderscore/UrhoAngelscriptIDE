@@ -22,6 +22,23 @@ namespace Debugger.IDE {
     public partial class IDETabs : UserControl {
         public IDETabs() {
             InitializeComponent();
+            tabs.SelectionChanged += tabs_SelectionChanged;
+        }
+
+        void tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+            {
+                TabItem item = e.AddedItems[0] as TabItem;
+                if (item != null)
+                {
+                    IDEEditor editor = item.Content as IDEEditor;
+                    if (editor != null)
+                    {
+                        editor.Activated();
+                    }
+                }
+            }
         }
 
         public IDEEditor OpenFile(FileBaseItem aFile, int aLine)

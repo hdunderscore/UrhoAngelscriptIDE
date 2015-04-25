@@ -13,6 +13,13 @@
         </StackPanel>
         <TreeView Name="objectTree">
             <TreeView.Resources>
+                <HierarchicalDataTemplate DataType="{x:Type INTEL:NamespaceInfo}" ItemsSource="{Binding Globals.AllUIView}">
+                    <StackPanel Orientation="Horizontal" Tag="{Binding}">
+                        <Image Source="/Images/all/namespace.png" />
+                        <TextBlock Text="namespace " />
+                        <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                    </StackPanel>
+                </HierarchicalDataTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type INTEL:EnumInfo}" ItemsSource="{Binding Values}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
                         <Image Source="/Images/all/enum.png" />
@@ -20,6 +27,7 @@
                         <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
                         <StackPanel.ContextMenu>
                             <ContextMenu>
+                                <MenuItem Header="Go To Definition" Click="onGoToDef" IsEnabled="{Binding CanGoToDef}" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}" />
                                 <MenuItem Header="Document" Click="onDocumentClasses" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>
@@ -32,6 +40,7 @@
                         <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
                         <StackPanel.ContextMenu>
                             <ContextMenu>
+                                <MenuItem Header="Go To Definition" Click="onGoToDef" IsEnabled="{Binding CanGoToDef}" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}" />
                                 <MenuItem Header="Document" Click="onDocumentClasses" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>
@@ -47,6 +56,7 @@
                         <StackPanel.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Go To Type" Click="onViewType" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}" />
+                                <MenuItem Header="Go To Definition" Click="onGoToDef" IsEnabled="{Binding CanGoToDef}" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}" />
                                 <MenuItem Header="Document" Click="onDocumentClasses" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>
@@ -60,6 +70,7 @@
                         <TextBlock Text="{Binding Inner}" Margin="2"/>
                         <StackPanel.ContextMenu>
                             <ContextMenu>
+                                <MenuItem Header="Go To Definition" Click="onGoToDef" IsEnabled="{Binding CanGoToDef}" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}" />
                                 <MenuItem Header="Document" Click="onDocumentClasses" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>

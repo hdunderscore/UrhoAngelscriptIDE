@@ -17,6 +17,8 @@ namespace Debugger.IDE.Intellisense.Sources
 
         public abstract void HookEditor(ICSharpCode.AvalonEdit.TextEditor editor, FileBaseItem item);
 
+        public abstract void DocumentChanged(TextEditor editor, FileBaseItem item);
+
         public void EditorKeyUp(ICSharpCode.AvalonEdit.TextEditor editor, DepthScanner scanner, System.Windows.Input.KeyEventArgs e)
         {
             Globals g = GetGlobals();
@@ -112,17 +114,17 @@ namespace Debugger.IDE.Intellisense.Sources
                 if (info == null)
                     info = reso.GetClassType(editor.Document, editor.TextArea.Caret.Line, word);
                 //attempt to resolve it from globals
-                if (info == null && GetGlobals() != null && GetGlobals().Properties.ContainsKey(word))
-                    info = GetGlobals().Properties[word];
+                if (info == null && GetGlobals() != null && GetGlobals().ContainsProperty(word))
+                    info = GetGlobals().GetProperty(word);
                 if (info == null && word.Contains("::"))
                 {
                     if (GetGlobals() == null)
                         return;
                     if (word.Length > 2)
                     {
-                        if (GetGlobals().Classes.ContainsKey(word.Replace("::", "")))
+                        if (GetGlobals().ContainsTypeInfo(word.Replace("::", "")))
                         {
-                            EnumInfo ti = GetGlobals().Classes[word.Replace("::", "")] as EnumInfo;
+                            EnumInfo ti = GetGlobals().GetTypeInfo(word.Replace("::", "")) as EnumInfo;
                             if (ti != null)
                             {
                                 currentComp = new CompletionWindow(editor.TextArea);
@@ -135,7 +137,7 @@ namespace Debugger.IDE.Intellisense.Sources
                             }
                             else
                             {
-                                TypeInfo ty = GetGlobals().Classes.FirstOrDefault(p => p.Key.Equals(word.Replace("::", ""))).Value;
+                                TypeInfo ty = GetGlobals().GetTypeInfo(word.Replace("::", ""));
                                 if (ty != null)
                                 {
                                     info = ty;
@@ -148,9 +150,9 @@ namespace Debugger.IDE.Intellisense.Sources
                             Globals globs = GetGlobals();
                             currentComp = new CompletionWindow(editor.TextArea);
                             IList<ICompletionData> data = currentComp.CompletionList.CompletionData;
-                            foreach (string str in globs.Properties.Keys)
-                                data.Add(new PropertyCompletionData(globs.Properties[str], str));
-                            foreach (FunctionInfo fi in globs.Functions)
+                            foreach (string str in globs.GetPropertyNames())
+                                data.Add(new PropertyCompletionData(globs.GetProperty(str) as TypeInfo, str));
+                            foreach (FunctionInfo fi in globs.GetFunctions(null))
                                 data.Add(new FunctionCompletionData(fi));
                             currentComp.Show();
                             currentComp.Closed += comp_Closed;
@@ -225,7 +227,7 @@ namespace Debugger.IDE.Intellisense.Sources
                 else if (func == null && info == null) // Found nothing
                 {
                     List<FunctionInfo> data = new List<FunctionInfo>();
-                    foreach (FunctionInfo fi in GetGlobals().Functions.Where(f => { return f.Name.Equals(words[1]); }))
+                    foreach (FunctionInfo fi in GetGlobals().GetFunctions(words[1]))
                         data.Add(fi);
                     if (data.Count > 0)
                     {
@@ -277,15 +279,15 @@ namespace Debugger.IDE.Intellisense.Sources
                     foreach (string str in suggestions) //text suggestions are of lower priority
                         data.Add(new BaseCompletionData(null, str) { Priority = 0.5 });
                 }
-                //Scal globals
+                //Scan globals
                 if (GetGlobals() != null)
                 {
-                    foreach (string str in GetGlobals().Classes.Keys)
+                    foreach (string str in GetGlobals().GetTypeInfoNames())
                     {
                         if (str.StartsWith(word))
-                            data.Add(new ClassCompletionData(GetGlobals().Classes[str]));
+                            data.Add(new ClassCompletionData(GetGlobals().GetTypeInfo(str)));
                     }
-                    foreach (FunctionInfo fun in GetGlobals().Functions)
+                    foreach (FunctionInfo fun in GetGlobals().GetFunctions(null))
                     {
                         if (fun.Name.StartsWith(word))
                             data.Add(new FunctionCompletionData(fun));
@@ -343,16 +345,16 @@ namespace Debugger.IDE.Intellisense.Sources
                             }
                             else if (isFunc && words.Length == 1)
                             {
-                                func = globs.Functions.FirstOrDefault(f => f.Name.Equals(words[0]));
+                                func = globs.GetFunction(words[0]);
                             }
                             else if (!isFunc && words.Length == 1)
                             {
                                 info = reso.GetClassType(editor.Document, line, words[0]);
                                 if (info == null)
                                 {
-                                    KeyValuePair<string, TypeInfo> ty = globs.Classes.FirstOrDefault(p => p.Value.Equals(words[0]));
-                                    if (ty.Value != null)
-                                        info = ty.Value;
+                                    TypeInfo ty = globs.GetTypeInfo(words[0]);
+                                    if (ty != null)
+                                        info = ty;
                                 }
                             }
 

@@ -31,7 +31,7 @@ namespace Debugger.IDE.Activity {
                 watcher_.EnableRaisingEvents = true;
             }
             Thread thread = new Thread(delegate() {
-                Globals globs = new Globals();
+                Globals globs = new Globals(true);
                 ASParser parser = new ASParser();
                 try
                 {

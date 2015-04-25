@@ -28,6 +28,7 @@ namespace Debugger.IDE {
         public IDEProject() {
             inst_ = this;
             docDatabase_ = new Docs.DocDatabase();
+            errors_.CollectionChanged += (o, p) => { OnPropertyChanged("CompileWarningCt"); OnPropertyChanged("CompileErrorCt"); };
         }
 
         string filePath_ = "";
@@ -38,8 +39,8 @@ namespace Debugger.IDE {
         IDESettings settings_;
 
         Intellisense.Globals intellisenseGlobals_;
+        Intellisense.Globals localGlobals_;
         ObservableCollection<PluginLib.CompileError> errors_ = new ObservableCollection<PluginLib.CompileError>();
-        ObservableCollection<PluginLib.CompileError> warnings_ = new ObservableCollection<PluginLib.CompileError>();
         string compileOutput_;
         Docs.DocDatabase docDatabase_;
 
@@ -49,11 +50,15 @@ namespace Debugger.IDE {
         [XmlIgnore]
         public Intellisense.Globals GlobalTypes { get { return intellisenseGlobals_; } set { intellisenseGlobals_ = value; OnPropertyChanged("GlobalTypes"); } }
         [XmlIgnore]
+        public Intellisense.Globals LocalTypes { get { return localGlobals_; } set { localGlobals_ = value; OnPropertyChanged("LocalTypes"); } }
+        [XmlIgnore]
         public string CompilerOutput { get { return compileOutput_; } set { compileOutput_ = value; OnPropertyChanged("CompilerOutput"); } }
         [XmlIgnore]
         public ObservableCollection<PluginLib.CompileError> CompileErrors { get { return errors_; } }
         [XmlIgnore]
-        public ObservableCollection<PluginLib.CompileError> CompileWarnings { get { return warnings_; } }
+        public int CompileErrorCt { get { return CompileErrors.Count(p => p.IsError ); } }
+        [XmlIgnore]
+        public int CompileWarningCt { get { return CompileErrors.Count(p => !p.IsError ); } }
 
 
         public string ProjectDir { get { return projectDir_; } set { projectDir_ = value; OnPropertyChanged("ProjectDir"); } }
@@ -119,7 +124,9 @@ namespace Debugger.IDE {
         {
             IDEView.inst().Dispatcher.Invoke(delegate()
             {
-                CompileWarnings.Add(error);
+                CompileErrors.Add(error);
+                OnPropertyChanged("CompileErrorCt");
+                OnPropertyChanged("CompileWarningCt");
             });
         }
 

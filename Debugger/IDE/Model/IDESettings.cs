@@ -15,6 +15,7 @@ namespace Debugger.IDE {
         string debugParams_ = "";
         string runParams_ = "";
         string sourceTree_ = "";
+        string includeDirs_ = "";
 
         public IDESettings() {
         }
@@ -38,5 +39,24 @@ namespace Debugger.IDE {
         public string RunParams { get { return runParams_; } set { runParams_ = value; OnPropertyChanged("RunParams"); } }
         public string SourceTree { get { return sourceTree_; } set { sourceTree_ = value; OnPropertyChanged("SourceTree"); } }
         public string Compiler { get { return compiler_; } set { compiler_ = value; OnPropertyChanged("Compiler"); } }
+        public string IncludePaths { get { return includeDirs_; } set { includeDirs_ = value; OnPropertyChanged("IncludePaths"); } }
+
+        public string[] GetIncludeDirectories()
+        {
+            if (IncludePaths != null)
+            {
+                string[] paths = IncludePaths.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < paths.Length; ++i)
+                {
+                    paths[i] = paths[i].Trim();
+                    // Root the path if need be
+                    if (!System.IO.Path.IsPathRooted(paths[i]))
+                        paths[i] = System.IO.Path.Combine(IDEProject.inst().ProjectDir, paths[i]);
+                    
+                }
+                return paths;
+            }
+            return null;
+        }
     }
 }

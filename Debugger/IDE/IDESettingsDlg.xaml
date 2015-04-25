@@ -37,6 +37,10 @@
                 <Label Content="Compiler" VerticalAlignment="Center" Margin="5" MinWidth="85"/>
                 <ComboBox Name="comboCompile" MinWidth="160" SelectedValue="{Binding Compiler}" DisplayMemberPath="Name" SelectedValuePath="Value" Margin="5"/>
             </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Include Paths" VerticalAlignment="Center" Margin="5" MinWidth="85"/>
+                <TextBox Name="txtIncludePaths" MinWidth="160" Text="{Binding IncludePaths}" Margin="5" ToolTip="Use semi-colons ; to seperate multiple paths"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </mui:ModernDialog>

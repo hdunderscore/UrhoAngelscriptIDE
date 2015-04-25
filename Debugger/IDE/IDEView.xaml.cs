@@ -105,6 +105,10 @@ namespace Debugger.IDE {
                 globalsTree.CallOnViewType = searchAction;
                 globalsTree.ItemBinding = new Binding("GlobalTypes.UIView");
 
+                localsTree.DataContext = IDEProject.inst();
+                localsTree.CallOnViewType = searchAction;
+                localsTree.ItemBinding = new Binding("LocalTypes.AllUIView");
+
                 txtConsole.DataContext = IDEProject.inst();
                 gridErrors.DataContext = IDEProject.inst();
                 errorTabCount.DataContext = IDEProject.inst();

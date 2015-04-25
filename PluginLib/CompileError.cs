@@ -29,5 +29,7 @@ namespace PluginLib
             get { return msg_; }
             set { msg_ = value; OnPropertyChanged("Message"); }
         }
+
+        public bool IsError { get; set; }
     }
 }

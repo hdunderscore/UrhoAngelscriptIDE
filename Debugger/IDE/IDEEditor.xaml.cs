@@ -137,6 +137,14 @@ namespace Debugger.IDE {
                 intelSource.EditorMouseHover(editor, scanner, e);
         }
 
+        public void Activated()
+        {
+            if (intelSource != null)
+            {
+                intelSource.DocumentChanged(editor, item);
+            }
+        }
+
         void editor_MouseWheel(object sender, MouseWheelEventArgs e) {
             if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) {
                 var newFontSize = editor.TextArea.FontSize + e.Delta / 50;
@@ -211,6 +219,8 @@ namespace Debugger.IDE {
             MainWindow.inst().Dispatcher.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate() {
                 changeChecker.Recheck();
             });
+            if (intelSource != null)
+                intelSource.DocumentChanged(editor, item);
         }
 
         private void CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e) {

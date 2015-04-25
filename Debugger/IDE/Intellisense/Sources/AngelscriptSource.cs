@@ -16,10 +16,16 @@ namespace Debugger.IDE.Intellisense.Sources
 {
     public class AngelscriptSource : SourceBase
     {
+        Globals documentGlobals_;
         public override Globals GetGlobals()
         {
             if (IDEProject.inst() == null)
                 return null;
+            if (documentGlobals_ != null)
+            {
+                documentGlobals_.Parent = IDEProject.inst().GlobalTypes;
+                return documentGlobals_;
+            }
             return IDEProject.inst().GlobalTypes;
         }
 
@@ -144,5 +150,13 @@ namespace Debugger.IDE.Intellisense.Sources
     {
     }
 }";
+
+        public override void DocumentChanged(TextEditor editor, FileBaseItem item)
+        {
+            MainWindow.inst().Dispatcher.Invoke(delegate()
+            {
+                IDEProject.inst().LocalTypes = documentGlobals_ = AngelscriptParser.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
+            });
+        }
     }
 }

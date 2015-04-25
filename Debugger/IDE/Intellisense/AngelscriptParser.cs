@@ -25,16 +25,16 @@ namespace Debugger.IDE.Intellisense
 
         static char[] BREAKCHARS = { ' ', ':' };
 
-        public static Globals Parse(String fileCode, string[] includePaths)
+        public static Globals Parse(string path, string fileCode, string[] includePaths)
         {
-            Globals ret = new Globals();
+            Globals ret = new Globals(false);
 
             // Merge global app registered types into it
-            ret.MergeIntoThis(IDEProject.inst().GlobalTypes);
+            ret.Parent = IDEProject.inst().GlobalTypes;
 
             List<string> existingPaths = new List<string>();
             // Inline #includes
-            fileCode = ProcessIncludes(fileCode, includePaths, existingPaths);
+            fileCode = ProcessIncludes(path, fileCode, includePaths, existingPaths);
             // Strip comments
             fileCode = StripComments(fileCode);
             DepthScanner scanner = new DepthScanner();
@@ -58,13 +58,16 @@ namespace Debugger.IDE.Intellisense
                 RegexOptions.Singleline);
         }
 
-        static string ProcessIncludes(string fileCode, string[] dirs, List<string> existingPaths)
+        static string ProcessIncludes(string filePath, string fileCode, string[] dirs, List<string> existingPaths)
         {
             StringReader rdr = new StringReader(fileCode);
             string line = null;
             StringBuilder sb = new StringBuilder();
+            string prefixFmt = "{0}|{1}>{2}"; //Prefix with fileName|line#
+            int codeLine = 0;
             while ((line = rdr.ReadLine()) != null)
             {
+                ++codeLine;
                 if (line.Contains("#include"))
                 {
                     string[] parts = line.Trim().Split(' ');
@@ -81,7 +84,7 @@ namespace Debugger.IDE.Intellisense
                                     if (!existingPaths.Contains(pathCombo))
                                     {
                                         string incCode = System.IO.File.ReadAllText(pathCombo);
-                                        sb.AppendLine(ProcessIncludes(incCode, dirs, existingPaths));
+                                        sb.AppendLine(ProcessIncludes(pathCombo, incCode, dirs, existingPaths));
                                         existingPaths.Add(pathCombo);
                                         break;
                                     }
@@ -94,7 +97,7 @@ namespace Debugger.IDE.Intellisense
                     }
                 }
                 else
-                    sb.AppendLine(line);
+                    sb.AppendLine(String.Format(prefixFmt, filePath, codeLine, line));
             }
             return sb.ToString();
         }
@@ -102,46 +105,84 @@ namespace Debugger.IDE.Intellisense
         static void Parse(StringReader rdr, DepthScanner scanner, Globals globals)
         {
             int currentLine = 0;
-            ParseNamespace(rdr, globals, scanner, ref currentLine);
+            ParseNamespace(rdr, globals, scanner, ref currentLine, false);
 
             // Resolve incomplete names
-            foreach (string key in globals.Properties.Keys)
+            foreach (string key in globals.GetPropertyNames())
             {
-                if (!globals.Properties[key].IsComplete)
-                    globals.Properties[key] = globals.Classes[globals.Properties[key].Name];
-                if (globals.Properties[key] is TemplateInst)
+                TypeInfo t = globals.GetProperty(key) as TypeInfo;
+                if (t != null)
                 {
-                    TemplateInst ti = globals.Properties[key] as TemplateInst;
-                    if (!ti.WrappedType.IsComplete)
-                        ti.WrappedType = globals.Classes[ti.WrappedType.Name];
+                    if (!t.IsComplete)
+                        globals.AddProperty(key, globals.GetTypeInfo(t.Name), -1, "");
+                    if (t is TemplateInst)
+                    {
+                        TemplateInst ti = t as TemplateInst;
+                        if (!ti.WrappedType.IsComplete)
+                            ti.WrappedType = globals.GetTypeInfo(ti.WrappedType.Name);
+                    }
                 }
             }
 
-            foreach (FunctionInfo f in globals.Functions)
+            foreach (FunctionInfo f in globals.GetFunctions(null))
             {
                 f.ResolveIncompletion(globals);
             }
 
-            foreach (TypeInfo type in globals.Classes.Values)
+            foreach (TypeInfo type in globals.TypeInfo)
             {
                 type.ResolveIncompletion(globals);
             }
         }
 
-        static void ParseNamespace(StringReader rdr, Globals globals, DepthScanner scanner, ref int currentLine)
+        static void ExtractLineInfo(ref string lineIn, out string lineOut, out int lineNumOut)
+        {
+            if (String.IsNullOrWhiteSpace(lineIn))
+            {
+                lineOut = "";
+                lineNumOut = -1;
+                return;
+            }
+            int vertidx = lineIn.IndexOf('|');
+            int tailidx = lineIn.IndexOf('>');
+            lineOut = lineIn.Substring(0, vertidx);
+            string parseLine = lineIn.Substring(vertidx + 1, tailidx - vertidx - 1);
+            lineNumOut = int.Parse(parseLine);
+            lineIn = lineIn.Substring(tailidx+1);
+        }
+
+        static void ParseNamespace(StringReader rdr, Globals globals, DepthScanner scanner, ref int currentLine, bool asNamespace)
         {
             string l = "";
             int depth = scanner.GetBraceDepth(currentLine);
+            bool hitDeeper = false;
             while ((l = rdr.ReadLine()) != null)
             {
+                string defName = "";
+                int lineNumber = 0;
+                ExtractLineInfo(ref l, out defName, out lineNumber);
+                
                 ++currentLine;
                 if (l.Trim().StartsWith("//"))
                     continue;
                 int curDepth = scanner.GetBraceDepth(currentLine-1);
-                if (curDepth < depth) // Left our namespace depth
-                    return;
-                else if (curDepth > depth) // Outside of the desired scanning depth (namespace level)
-                    continue;
+                if (!asNamespace)
+                {
+                    if (curDepth < depth) // Left our namespace depth
+                        return;
+                    else if (curDepth > depth) // Outside of the desired scanning depth (namespace level)
+                        continue;
+                }
+                else
+                {
+                    if (curDepth > depth)
+                        hitDeeper = true;
+                    if (curDepth == depth && hitDeeper)
+                        return;
+                    else if (curDepth > depth + 1) //We do not go deeper than the namespace
+                        continue;
+                }
+
                 string line = l.Trim();
                 if (line.Length == 0)
                     continue;
@@ -163,28 +204,30 @@ namespace Debugger.IDE.Intellisense
                     }
 
                     string className = tokens[classTermIdx + 1];
-                    TypeInfo ti = new TypeInfo { Name = className, IsTemplate = templateIdx != -1, IsAbstract = abstractIdx != -1 };
+                    TypeInfo ti = new TypeInfo { Name = className, IsTemplate = templateIdx != -1, IsAbstract = abstractIdx != -1, SourceLine = lineNumber, SourceFile = defName };
 
                     // Get any baseclasses, baseclass must appear first
                     for (int i = classTermIdx + 2; i < tokens.Length; ++i)
                     {
                         string baseName = tokens[i];
-                        if (globals.Classes.ContainsKey(baseName))
-                            ti.BaseTypes.Add(globals.Classes[baseName]);
+                        if (globals.ContainsTypeInfo(baseName))
+                            ti.BaseTypes.Add(globals.GetTypeInfo(baseName));
                     }
                     ParseClass(rdr, globals, scanner, ti, ref currentLine);
+                    globals.AddTypeInfo(className, ti);
                 } 
                 else if (tokens[0].ToLower().Equals("namespace")) // Namespace
                 {
                     string nsName = tokens[1];
                     Globals namespaceGlobals = null;
-                    if (globals.Namespaces.ContainsKey(nsName)) // Check if the namespace has been encountered before
-                        namespaceGlobals = globals.Namespaces[nsName];
+                    if (globals.ContainsNamespace(nsName)) // Check if the namespace has been encountered before
+                        namespaceGlobals = globals.GetNamespace(nsName);
                     else
-                        namespaceGlobals = new Globals();
-                    ParseNamespace(rdr, namespaceGlobals, scanner, ref currentLine);
-
-                    globals.Namespaces[nsName] = namespaceGlobals;
+                        namespaceGlobals = new Globals(false);
+                    namespaceGlobals.Parent = globals;
+                    ParseNamespace(rdr, namespaceGlobals, scanner, ref currentLine, true);
+                    namespaceGlobals.Name = nsName;
+                    globals.AddNamespace(nsName, namespaceGlobals);
                 }
                 else if (tokens[0].ToLower().Equals("enum")) // Enumeration
                 {
@@ -194,7 +237,7 @@ namespace Debugger.IDE.Intellisense
                 {
                     if (ResemblesFunction(line)) // Global/namespace function
                     {
-                        globals.Functions.Add(_parseFunction(line, globals));
+                        globals.AddFunction(_parseFunction(line, globals, lineNumber, defName));
                     }
                     else if (ResemblesProperty(line, globals)) // Global/namespace property
                     {
@@ -208,9 +251,9 @@ namespace Debugger.IDE.Intellisense
                         {
                             string templateType = parts[termIdx].Substring(0, parts[termIdx].IndexOf('<'));
                             string containedType = parts[termIdx].Extract('<', '>');
-                            TypeInfo wrapped = globals.Classes.FirstOrDefault(t => t.Key.Equals(containedType)).Value;
-                            TemplateInst ti = new TemplateInst() { Name = templateType, IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = containedType, IsComplete = false } };
-                            globals.Properties[parts[termIdx + 1]] = ti;
+                            TypeInfo wrapped = globals.GetTypeInfo(containedType);
+                            TemplateInst ti = new TemplateInst() { Name = templateType, IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = containedType, IsComplete = false, SourceLine = lineNumber, SourceFile = defName } };
+                            globals.AddProperty(parts[termIdx + 1], ti, lineNumber, defName);
                             //if (constIdx != -1)
                             //    globals.ReadonlyProperties.Add(tokens[termIdx + 1]);
                         }
@@ -218,13 +261,13 @@ namespace Debugger.IDE.Intellisense
                         {
                             string pname = parts[termIdx].EndsWith("@") ? parts[termIdx].Substring(0, parts[termIdx].Length - 1) : parts[termIdx]; //handle
                             TypeInfo pType = null;
-                            if (globals.Classes.ContainsKey(pname))
-                                pType = globals.Classes[pname];
+                            if (globals.ContainsTypeInfo(pname))
+                                pType = globals.GetTypeInfo(pname);
                             if (pType == null)
                             { //create temp type to resolve later
-                                pType = new TypeInfo() { Name = pname, IsComplete = false };
+                                pType = new TypeInfo() { Name = pname, IsComplete = false, SourceLine = lineNumber, SourceFile = defName };
                             }
-                            globals.Properties[parts[termIdx + 1]] = pType;
+                            globals.AddProperty(parts[termIdx + 1], pType, lineNumber, defName);
                             //if (constIdx != -1)
                             //    globals.ReadonlyProperties.Add(tokens[termIdx + 1]);
                         }
@@ -237,17 +280,25 @@ namespace Debugger.IDE.Intellisense
         {
             int depth = scanner.GetBraceDepth(currentLine);
             string l = "";
+            bool hitDeeper = false;
             while ((l = rdr.ReadLine()) != null)
             {
+                string defName = "";
+                int lineNumber = 0;
+                ExtractLineInfo(ref l, out defName, out lineNumber);
+                l = l.Trim();
+
                 ++currentLine;
                 int curDepth = scanner.GetBraceDepth(currentLine-1);
-                if (curDepth < depth)
+                if (curDepth > depth)
+                    hitDeeper = true;
+                if (curDepth == depth && hitDeeper)
                     return;
-                else if (curDepth > depth) //We do not go deeper than class
+                else if (curDepth > depth + 1) //We do not go deeper than class
                     continue;
                 if (ResemblesFunction(l))
                 {
-                    targetType.Functions.Add(_parseFunction(l, targetGlobals));
+                    targetType.Functions.Add(_parseFunction(l, targetGlobals, lineNumber, defName));
                 }
                 else if (ResemblesProperty(l, targetGlobals))
                 {
@@ -263,9 +314,10 @@ namespace Debugger.IDE.Intellisense
                     {
                         string templateType = tokens[termIdx].Substring(0, tokens[termIdx].IndexOf('<'));
                         string containedType = tokens[termIdx].Extract('<', '>');
-                        TypeInfo wrapped = targetGlobals.Classes.FirstOrDefault(t => t.Key.Equals(containedType)).Value;
-                        TemplateInst ti = new TemplateInst() { Name = templateType, IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = containedType, IsComplete = false } };
+                        TypeInfo wrapped = targetGlobals.GetTypeInfo(containedType);
+                        TemplateInst ti = new TemplateInst() { Name = templateType, IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = containedType, IsComplete = false, SourceLine = lineNumber, SourceFile = defName } };
                         targetType.Properties[tokens[termIdx+1]] = ti;
+                        targetType.PropertyLines[tokens[termIdx + 1]] = lineNumber;
                         if (constIdx != -1)
                             targetType.ReadonlyProperties.Add(tokens[termIdx + 1]);
                         if (protectedIdx != -1)
@@ -277,13 +329,14 @@ namespace Debugger.IDE.Intellisense
                     {
                         string pname = tokens[termIdx].EndsWith("@") ? tokens[termIdx].Substring(0, tokens[termIdx].Length - 1) : tokens[termIdx]; //handle
                         TypeInfo pType = null;
-                        if (targetGlobals.Classes.ContainsKey(pname))
-                            pType = targetGlobals.Classes[pname];
+                        if (targetGlobals.ContainsTypeInfo(pname))
+                            pType = targetGlobals.GetTypeInfo(pname);
                         if (pType == null)
                         { //create temp type to resolve later
-                            pType = new TypeInfo() { Name = pname, IsComplete = false };
+                            pType = new TypeInfo() { Name = pname, IsComplete = false, SourceLine = lineNumber, SourceFile = defName };
                         }
                         targetType.Properties[tokens[termIdx + 1]] = pType;
+                        targetType.PropertyLines[tokens[termIdx + 1]] = lineNumber;
                         if (constIdx != -1)
                             targetType.ReadonlyProperties.Add(tokens[termIdx + 1]);
                         if (protectedIdx != -1)
@@ -300,11 +353,15 @@ namespace Debugger.IDE.Intellisense
             string enumName = nameparts[1];
             List<string> enumValues = new List<string>();
             while ((line = rdr.ReadLine()) != null) {
+                string defName = "";
+                int lineNumber = 0;
+                ExtractLineInfo(ref line, out defName, out lineNumber);
+
                 ++currentLine;
                 if (line.Equals("};")) {
                     EnumInfo ret = new EnumInfo { Name = enumName };
                     ret.Values.AddRange(enumValues);
-                    globals.Classes[enumName] = ret;
+                    globals.AddTypeInfo(enumName, ret);
                     return;
                 } else if (line.Contains(',')) {
                     int sub = line.IndexOf(',');
@@ -313,7 +370,7 @@ namespace Debugger.IDE.Intellisense
             }
         }
 
-        static FunctionInfo _parseFunction(string line, Globals globals)
+        static FunctionInfo _parseFunction(string line, Globals globals, int lineNumber, string defName)
         {
             int firstParen = line.IndexOf('(');
             int lastParen = line.LastIndexOf(')');
@@ -323,23 +380,23 @@ namespace Debugger.IDE.Intellisense
             TypeInfo retType = null;
 
             //TODO: split the name parts
-            if (globals.Classes.ContainsKey(nameParts[0]))
+            if (globals.ContainsTypeInfo(nameParts[0]))
             {
-                retType = globals.Classes[nameParts[0]];
+                retType = globals.GetTypeInfo(nameParts[0]);
             }
             else if (nameParts[0].Contains('<'))
             {
                 string wrappedType = nameParts[0].Extract('<', '>');
                 string templateType = nameParts[0].Replace(string.Format("<{0}>", wrappedType), "");
-                TypeInfo wrapped = globals.Classes.FirstOrDefault(t => t.Key.Equals(wrappedType)).Value;
-                TemplateInst ti = new TemplateInst() { Name = nameParts[0], IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = wrappedType, IsComplete = false } };
+                TypeInfo wrapped = globals.GetTypeInfo(wrappedType);
+                TemplateInst ti = new TemplateInst() { Name = nameParts[0], IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = wrappedType, IsComplete = false, SourceLine = lineNumber, SourceFile = defName } };
                 retType = ti;
             }
             else
             {
-                retType = new TypeInfo() { Name = nameParts[0], IsPrimitive = false };
+                retType = new TypeInfo() { Name = nameParts[0], IsPrimitive = false, SourceLine = lineNumber, SourceFile = defName };
             }
-            return new FunctionInfo { Name = nameParts[1], ReturnType = retType, Inner = paramDecl };
+            return new FunctionInfo { Name = nameParts[1], ReturnType = retType, Inner = paramDecl, SourceLine = lineNumber, SourceFile = defName };
         }
 
         static bool ResemblesFunction(string line)
@@ -368,7 +425,7 @@ namespace Debugger.IDE.Intellisense
 
                 int termIdx = Math.Max(constIdx, Math.Max(privateIdx, protectedIdx)) + 1;
 
-                if (globals.Classes.ContainsKey(tokens[termIdx].Replace("@","")))
+                if (globals.ContainsTypeInfo(tokens[termIdx].Replace("@","")))
                 {
                     if (tokens[termIdx+1].EndsWith(";"))
                         return true;

@@ -164,5 +164,37 @@ namespace Debugger.Controls
             if (pi != null && CallOnViewType != null)
                 CallOnViewType(pi);
         }
+
+        private void onGoToDef(object sender, RoutedEventArgs e)
+        {
+            MenuItem item = sender as MenuItem;
+            ContextMenu menu = item.CommandParameter as ContextMenu;
+            FunctionInfo fi = (menu.PlacementTarget as StackPanel).Tag as FunctionInfo;
+            if (fi != null)
+            {
+                IDEView.inst().ideTabs.OpenFile(new FileLeafItem {
+                        Path = fi.SourceFile,
+                        Name = System.IO.Path.GetFileName(fi.SourceFile)
+                    }, fi.SourceLine);
+            }
+            PropInfo pi = (menu.PlacementTarget as StackPanel).Tag as PropInfo;
+            if (pi != null)
+            {
+                IDEView.inst().ideTabs.OpenFile(new FileLeafItem
+                {
+                    Path = pi.SourceFile,
+                    Name = System.IO.Path.GetFileName(pi.SourceFile)
+                }, pi.SourceLine);
+            }
+            TypeInfo ti = (menu.PlacementTarget as StackPanel).Tag as TypeInfo;
+            if (ti != null)
+            {
+                IDEView.inst().ideTabs.OpenFile(new FileLeafItem
+                {
+                    Path = ti.SourceFile,
+                    Name = System.IO.Path.GetFileName(ti.SourceFile)
+                }, ti.SourceLine);
+            }
+        }
     }
 }

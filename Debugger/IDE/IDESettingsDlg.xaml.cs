@@ -42,6 +42,7 @@ namespace Debugger.IDE {
             txtSourceTree.DataContext = IDEProject.inst().Settings;
             comboCompile.ItemsSource = compilers_;
             comboCompile.DataContext = IDEProject.inst().Settings;
+            txtIncludePaths.DataContext = IDEProject.inst().Settings;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e) {

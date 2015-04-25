@@ -21,6 +21,10 @@ namespace Debugger.IDE.Intellisense
         public TypeInfo Type { get; set; }
         public TypeInfo WrappedType { get; set; } //only relevant when we're a template
 
+        public string SourceFile { get; set; }
+        public int SourceLine { get; set; }
+        public bool CanGoToDef { get { return SourceLine > 0; } }
+
         public string ImgSource
         {
             get
@@ -35,10 +39,10 @@ namespace Debugger.IDE.Intellisense
 
         public void ResolveIncompletion(Globals globs)
         {
-            if (!Type.IsComplete && globs.Classes.ContainsKey(Type.Name))
-                Type = globs.Classes[Type.Name];
-            if (WrappedType != null && !WrappedType.IsComplete && globs.Classes.ContainsKey(WrappedType.Name))
-                WrappedType = globs.Classes[WrappedType.Name];
+            if (!Type.IsComplete && globs.ContainsTypeInfo(Type.Name))
+                Type = globs.GetTypeInfo(Type.Name);
+            if (WrappedType != null && !WrappedType.IsComplete && globs.ContainsTypeInfo(WrappedType.Name))
+                WrappedType = globs.GetTypeInfo(WrappedType.Name);
         }
     }
 
@@ -65,6 +69,8 @@ namespace Debugger.IDE.Intellisense
             ProtectedProperties = new List<string>();
             IsComplete = true; //default we'll assume complete
             IsPrimitive = false;
+            SourceLine = 0;
+            PropertyLines = new Dictionary<string, int>();
         }
 
         public override BaseTypeInfo ResolvePropertyPath(Globals globals, params string[] path)
@@ -80,7 +86,7 @@ namespace Debugger.IDE.Intellisense
                         return ((TemplateInst)fi.ReturnType).WrappedType;
                     else if (fi.ReturnType is TemplateInst)
                     {
-                        return globals.Classes[fi.ReturnType.Name.Substring(0, fi.ReturnType.Name.IndexOf('<'))];
+                        return globals.GetTypeInfo(fi.ReturnType.Name.Substring(0, fi.ReturnType.Name.IndexOf('<')));
                     }
                     return fi.ReturnType;
                 }
@@ -99,13 +105,13 @@ namespace Debugger.IDE.Intellisense
                     return null;
                 else if (ti.WrappedType == null)
                     return ti;
-                return globals.Classes[ti.WrappedType.Name];
+                return globals.GetTypeInfo(ti.WrappedType.Name);
             }
             else if (Properties.ContainsKey(path[0]))
             {
                 BaseTypeInfo ti = Properties[path[0]];
                 if (ti is TemplateInst)
-                    ti = globals.Classes[((TemplateInst)ti).Name];
+                    ti = globals.GetTypeInfo(((TemplateInst)ti).Name);
                 if (path.Length > 1)
                     ti = ti.ResolvePropertyPath(globals, path.SubArray(1, path.Length - 1));
                 return ti;
@@ -134,10 +140,14 @@ namespace Debugger.IDE.Intellisense
         public List<TypeInfo> BaseTypes { get; private set; }
         public string Name { get; set; }
         public Dictionary<string, TypeInfo> Properties { get; private set; }
+        public Dictionary<string, int> PropertyLines { get; private set; }
         public List<string> ReadonlyProperties { get; private set; }
         public List<string> ProtectedProperties { get; private set; }
         public List<string> PrivateProperties { get; private set; }
         public List<FunctionInfo> Functions { get; private set; }
+        public string SourceFile { get; set; }
+        public int SourceLine { get; set; }
+        public bool CanGoToDef { get { return SourceLine > 0; } }
 
         public List<object> PropertyUI
         {
@@ -145,7 +155,7 @@ namespace Debugger.IDE.Intellisense
             {
                 List<object> ret = new List<object>();
                 foreach (string key in Properties.Keys)
-                    ret.Add(new PropInfo { Name = key, Type = Properties[key], ReadOnly = ReadonlyProperties.Contains(key), Protected = ProtectedProperties.Contains(key) });
+                    ret.Add(new PropInfo { Name = key, Type = Properties[key], ReadOnly = ReadonlyProperties.Contains(key), Protected = ProtectedProperties.Contains(key), SourceLine = PropertyLines[key], SourceFile = SourceFile });
                 foreach (FunctionInfo f in Functions)
                     ret.Add(f);
                 return ret;
@@ -161,7 +171,7 @@ namespace Debugger.IDE.Intellisense
             {
                 if (!Properties[key].IsComplete)
                 {
-                    Properties[key] = globs.Classes[Properties[key].Name];
+                    Properties[key] = globs.GetTypeInfo(Properties[key].Name);
                 }
             }
         }
@@ -178,6 +188,9 @@ namespace Debugger.IDE.Intellisense
         public string Inner { get; set; }
         public List<TypeInfo> Params { get; set; }
         public bool IsConst { get; set; }
+        public string SourceFile { get; set; }
+        public int SourceLine { get; set; }
+        public bool CanGoToDef { get { return SourceLine > 0; } }
 
         public override BaseTypeInfo ResolvePropertyPath(Globals globals, params string[] path)
         {
@@ -186,16 +199,16 @@ namespace Debugger.IDE.Intellisense
 
         public void ResolveIncompletion(Globals globs)
         {
-            if (globs.Classes.ContainsKey(ReturnType.Name))
-                ReturnType = globs.Classes[ReturnType.Name];
+            if (globs.ContainsTypeInfo(ReturnType.Name))
+                ReturnType = globs.GetTypeInfo(ReturnType.Name);
             if (ReturnType is TemplateInst)
             { //not found in globals
-                ((TemplateInst)ReturnType).WrappedType = globs.Classes[((TemplateInst)ReturnType).WrappedType.Name];
+                ((TemplateInst)ReturnType).WrappedType = globs.GetTypeInfo(((TemplateInst)ReturnType).WrappedType.Name);
             }
             for (int i = 0; i < Params.Count; ++i)
             {
-                if (!Params[i].IsComplete && globs.Classes.ContainsKey(Params[i].Name))
-                    Params[i] = globs.Classes[Params[i].Name];
+                if (!Params[i].IsComplete && globs.ContainsTypeInfo(Params[i].Name))
+                    Params[i] = globs.GetTypeInfo(Params[i].Name);
             }
         }
     }
@@ -220,28 +233,33 @@ namespace Debugger.IDE.Intellisense
 
     public class Globals
     {
-        public Globals()
+        public Globals(bool createPrimitives)
         {
             Properties = new Dictionary<string, TypeInfo>();
             Functions = new List<FunctionInfo>();
             Classes = new Dictionary<string, TypeInfo>();
             Namespaces = new Dictionary<string, Globals>();
             ReadonlyProperties = new List<string>();
+            PropertyLines = new Dictionary<string, int>();
+            PropertyFiles = new Dictionary<string, string>();
 
-            Classes["void"] = new TypeInfo() { Name = "void", IsPrimitive = true };
-            Classes["int"] = new TypeInfo() { Name = "int", IsPrimitive = true };
-            Classes["uint"] = new TypeInfo() { Name = "uint", IsPrimitive = true };
-            Classes["float"] = new TypeInfo() { Name = "float", IsPrimitive = true };
-            Classes["double"] = new TypeInfo() { Name = "double", IsPrimitive = true };
-            Classes["bool"] = new TypeInfo() { Name = "bool", IsPrimitive = true };
+            if (createPrimitives)
+            {
+                Classes["void"] = new TypeInfo() { Name = "void", IsPrimitive = true };
+                Classes["int"] = new TypeInfo() { Name = "int", IsPrimitive = true };
+                Classes["uint"] = new TypeInfo() { Name = "uint", IsPrimitive = true };
+                Classes["float"] = new TypeInfo() { Name = "float", IsPrimitive = true };
+                Classes["double"] = new TypeInfo() { Name = "double", IsPrimitive = true };
+                Classes["bool"] = new TypeInfo() { Name = "bool", IsPrimitive = true };
 
-            //extended types
-            Classes["int8"] = new TypeInfo() { Name = "int8", IsPrimitive = true };
-            Classes["int16"] = new TypeInfo() { Name = "int16", IsPrimitive = true };
-            Classes["int64"] = new TypeInfo() { Name = "int64", IsPrimitive = true };
-            Classes["uint8"] = new TypeInfo() { Name = "uint8", IsPrimitive = true };
-            Classes["uint16"] = new TypeInfo() { Name = "uint16", IsPrimitive = true };
-            Classes["uint64"] = new TypeInfo() { Name = "uint64", IsPrimitive = true };
+                //extended types
+                Classes["int8"] = new TypeInfo() { Name = "int8", IsPrimitive = true };
+                Classes["int16"] = new TypeInfo() { Name = "int16", IsPrimitive = true };
+                Classes["int64"] = new TypeInfo() { Name = "int64", IsPrimitive = true };
+                Classes["uint8"] = new TypeInfo() { Name = "uint8", IsPrimitive = true };
+                Classes["uint16"] = new TypeInfo() { Name = "uint16", IsPrimitive = true };
+                Classes["uint64"] = new TypeInfo() { Name = "uint64", IsPrimitive = true };
+            }
         }
 
         // Present usage only wants classes
@@ -255,23 +273,26 @@ namespace Debugger.IDE.Intellisense
         }
 
         public Globals Parent { get; set; }
-        public Dictionary<string, Globals> Namespaces { get; private set; }
-        public Dictionary<string, TypeInfo> Classes { get; private set; }
-        public Dictionary<string, TypeInfo> Properties { get; private set; }
+        public string Name { get; set; } // Only applies if this is a Namespace
+        Dictionary<string, Globals> Namespaces { get; set; }
+        Dictionary<string, TypeInfo> Classes { get; set; }
+        Dictionary<string, TypeInfo> Properties { get; set; }
+        Dictionary<string, int> PropertyLines { get; set; }
+        Dictionary<string, string> PropertyFiles { get; set; }
 
         public List<string> ReadonlyProperties { get; private set; }
         
         // Used For UI
-        public IEnumerable<string> ClassKeys { get { return Classes.Keys; } }
+        IEnumerable<string> ClassKeys { get { return Classes.Keys; } }
         public List<TypeInfo> TypeInfo { get { return new List<TypeInfo>(Classes.Values); } }
-        public List<FunctionInfo> Functions { get; private set; }
+        List<FunctionInfo> Functions { get; set; }
         public List<object> UIView
         {
             get
             {
                 List<object> ret = new List<object>();
                 foreach (string key in Properties.Keys)
-                    ret.Add(new PropInfo { Name = key, Type = Properties[key] });
+                    ret.Add(new PropInfo { Name = key, Type = Properties[key], SourceLine = PropertyLines[key], SourceFile = PropertyFiles[key] });
                 foreach (FunctionInfo fi in Functions)
                     ret.Add(fi);
                 return ret;
@@ -294,7 +315,7 @@ namespace Debugger.IDE.Intellisense
                 ret.AddRange(Functions);
                 // Global properties
                 foreach (string key in Properties.Keys)
-                    ret.Add(new PropInfo { Name = key, Type = Properties[key] });
+                    ret.Add(new PropInfo { Name = key, Type = Properties[key], SourceLine = PropertyLines[key], SourceFile = PropertyFiles[key] });
                 return ret;
             }
         }
@@ -307,11 +328,17 @@ namespace Debugger.IDE.Intellisense
                 Globals ns = GetNamespace(name);
                 if (ns != null)
                     return ns.ContainsTypeInfo(name);
+                if (Parent != null)
+                    return Parent.ContainsTypeInfo(name);
                 return false;
             }
             else
             {
-                return Classes.ContainsKey(name);
+                if (Classes.ContainsKey(name))
+                    return true;
+                if (Parent != null)
+                    return Parent.ContainsTypeInfo(name);
+                return false;
             }
         }
 
@@ -323,14 +350,32 @@ namespace Debugger.IDE.Intellisense
                 Globals ns = GetNamespace(name);
                 if (ns != null)
                     return ns.GetTypeInfo(parts[1]);
+                if (Parent != null)
+                    return Parent.GetTypeInfo(name);
                 return null;
             }
             else
             {
                 if (Classes.ContainsKey(name))
                     return Classes[name];
+                if (Parent != null)
+                    return Parent.GetTypeInfo(name);
                 return null;
             }
+        }
+
+        public void AddTypeInfo(string name, TypeInfo ti)
+        {
+            Classes[name] = ti;
+        }
+
+        public IEnumerable<string> GetTypeInfoNames()
+        {
+            List<string> ret = new List<string>();
+            ret.AddRange(Classes.Keys);
+            if (Parent != null)
+                ret.AddRange(Parent.GetTypeInfoNames());
+            return ret;
         }
 
         public bool ContainsFunction(string name)
@@ -341,11 +386,17 @@ namespace Debugger.IDE.Intellisense
                 Globals ns = GetNamespace(name);
                 if (ns != null)
                     return ns.ContainsFunction(name);
+                if (Parent != null)
+                    return Parent.ContainsFunction(name);
                 return false;
             }
             else
             {
-                return Functions.FirstOrDefault(f => f.Name == name) != null;
+                if (Functions.FirstOrDefault(f => f.Name == name) != null)
+                    return true;
+                if (Parent != null)
+                    return Parent.ContainsFunction(name);
+                return false;
             }
         }
 
@@ -357,28 +408,93 @@ namespace Debugger.IDE.Intellisense
                 Globals ns = GetNamespace(name);
                 if (ns != null)
                     return ns.GetFunction(parts[1]);
+                if (Parent != null)
+                    return Parent.GetFunction(name);
                 return null;
             }
             else
             {
                 if (Classes.ContainsKey(name))
                     return Functions.FirstOrDefault(f => f.Name == name);
+                if (Parent != null)
+                    return Parent.GetFunction(name);
                 return null;
             }
         }
 
+        public void AddFunction(FunctionInfo fi)
+        {
+            Functions.Add(fi);
+        }
+
+        public IEnumerable<FunctionInfo> GetFunctions(string name)
+        {
+            List<FunctionInfo> ret = new List<FunctionInfo>();
+            foreach (FunctionInfo fi in Functions)
+            {
+                if (name == null || name.Equals(fi.Name))
+                    ret.Add(fi);
+            }
+            if (Parent != null)
+                ret.AddRange(Parent.GetFunctions(name));
+            return ret;
+        }
+
+        public bool ContainsNamespace(string ns)
+        {
+            if (Namespaces.ContainsKey(ns))
+                return true;
+            if (Parent != null)
+                return Parent.ContainsNamespace(ns);
+            return false;
+        }
+
         public Globals GetNamespace(string ns)
         {
-            if (Parent == null)
-            {
-                if (Namespaces.ContainsKey(ns))
-                    return Namespaces[ns];
-                return null;
-            }
-            else
-            {
+            if (Namespaces.ContainsKey(ns))
+                return Namespaces[ns];
+            if (Parent != null)
                 return Parent.GetNamespace(ns);
-            }
+            return null;
+        }
+
+        public void AddNamespace(string ns, Globals g)
+        {
+            Namespaces[ns] = g;
+        }
+
+        public bool ContainsProperty(string name)
+        {
+            if (Properties.ContainsKey(name))
+                return true;
+            if (Parent != null)
+                return Parent.ContainsProperty(name);
+            return false;
+        }
+
+        public BaseTypeInfo GetProperty(string name)
+        {
+            if (Properties.ContainsKey(name))
+                return Properties[name];
+            if (Parent != null)
+                return Parent.GetProperty(name);
+            return null;
+        }
+
+        public IEnumerable<string> GetPropertyNames()
+        {
+            List<string> ret = new List<string>();
+            ret.AddRange(Properties.Keys);
+            if (Parent != null)
+                ret.AddRange(Parent.GetPropertyNames());
+            return ret;
+        }
+
+        public void AddProperty(string name, TypeInfo ti, int line, string file)
+        {
+            Properties[name] = ti;
+            PropertyLines[name] = line;
+            PropertyFiles[name] = file;
         }
     }
 }
