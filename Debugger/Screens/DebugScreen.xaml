@@ -91,7 +91,13 @@
             <GridSplitter Width="6" Grid.Column="1" Grid.Row="1" Name="splitMidVertical" MouseDoubleClick="GridSplitter_MouseDoubleClick"/>
             <TabControl Grid.Column="2" Grid.Row="1">
                 <TabControl.Items>
-                    <TabItem Header="Files">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/filebrowser.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Files" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <Grid>
                             <DataGrid Name="fileList" ItemsSource="{Binding Files}" CanUserAddRows="False" IsReadOnly="True" SelectionChanged="fileList_SelectionChanged" AutoGenerateColumns="False">
                                 <DataGrid.Columns>
@@ -100,17 +106,35 @@
                             </DataGrid>
                         </Grid>
                     </TabItem>
-                    <TabItem Header="Local Vars">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/localvariables.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Local Vars" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <Grid>
                             <props:JWrapView x:Name="localsTree" />
                         </Grid>
                     </TabItem>
-                    <TabItem Header="$this">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/this.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="$this" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <Grid>
                             <props:JWrapView x:Name="thisTree" />
                         </Grid>
                     </TabItem>
-                    <TabItem Header="Globals">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/pc.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Globals" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <props:JWrapView x:Name="globalsTree" />
                     </TabItem>
                 </TabControl.Items>
@@ -126,14 +150,26 @@
                 </Grid.ColumnDefinitions>
             
                 <TabControl Grid.Column="0">
-                    <TabItem Header="Watch">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/search.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Watch" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <Grid>
                             <DataGrid Name="watchGrid" ItemsSource="{Binding Watches}">
                                 
                             </DataGrid>
                         </Grid>
                     </TabItem>
-                    <TabItem Header="Log">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/output.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Log" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <Grid>
                             <DataGrid Name="logGrid" ItemsSource="{Binding Log}" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False">
                                 <DataGrid.RowStyle>
@@ -172,7 +208,13 @@
                 </TabControl>
                 <GridSplitter Grid.Column="1"/>
                 <TabControl Grid.Column="2">
-                    <TabItem Header="Breakpoints">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/breakpoints.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Breakpoints" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <Grid>
                             <DataGrid Name="breakGrid" ItemsSource="{Binding AllBreakpoints}" CanUserAddRows="False" AutoGenerateColumns="False" PreviewKeyDown="breakGrid_PreviewKeyDown">
                                 <DataGrid.Columns>
@@ -188,7 +230,13 @@
                             </DataGrid>
                         </Grid>
                     </TabItem>
-                    <TabItem Header="Callstack">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/callstack.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Callstack" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <DataGrid Name="stackGrid" ItemsSource="{Binding CallStack}" CanUserAddRows="False" IsReadOnly="True">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">

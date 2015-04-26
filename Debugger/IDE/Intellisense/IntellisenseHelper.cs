@@ -112,7 +112,7 @@ namespace Debugger.IDE.Intellisense {
             }
             
             string path = doc.Text.Substring(pt + 1, offset - pt).Replace("::",".");
-            return path.Split('.');
+            return path.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
         }
 
         public static int OffsetWordLeft(TextDocument doc, int offset, int line) {

@@ -35,7 +35,7 @@ namespace Debugger.IDE.Intellisense {
             } while (depth > 0 && line > 0); //function depth may be on the first 0 scanning up, same with class def
         }
 
-        public TypeInfo GetClassType(TextDocument aDoc, int line, string text) {
+        public BaseTypeInfo GetClassType(TextDocument aDoc, int line, string text) {
             if (globals_ == null)
                 return null;
             --line; //subtract one for how AvalonEdit stores text versus reports its position
@@ -108,7 +108,7 @@ namespace Debugger.IDE.Intellisense {
                         bool okay = true;
                         bool hitSpace = false;
                         while (idx > 0) { //scan backwards to find the typename
-                            if (!char.IsLetterOrDigit(lineCode[idx]) && lineCode[idx] != ' ' && lineCode[idx] != '@' && lineCode[idx] != '&') {
+                            if (!char.IsLetterOrDigit(lineCode[idx]) && lineCode[idx] != ' ' && lineCode[idx] != '@' && lineCode[idx] != '&' && lineCode[idx] != ':') {
                                 okay = false;
                                 ++idx;
                                 break;
@@ -137,6 +137,19 @@ namespace Debugger.IDE.Intellisense {
                             if (globals_.ContainsTypeInfo(substr)) {
                                 //Found a class
                                 return globals_.GetTypeInfo(substr);
+                            } else if (substr.Contains(':'))
+                            {
+                                string[] words = substr.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                                if (words.Length > 1 && globals_.ContainsNamespace(words[0]))
+                                {
+                                    Globals g = globals_;
+                                    for (int i = 0; i < words.Length - 1; ++i)
+                                    {
+                                        g = globals_.GetNamespace(words[i]);
+                                    }
+                                    if (g.ContainsTypeInfo(words[words.Length - 1]))
+                                        return g.GetTypeInfo(words[words.Length - 1]);
+                                }
                             }
                         }
                     }

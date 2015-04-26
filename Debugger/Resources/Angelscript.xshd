@@ -33,6 +33,7 @@
             <Word>interface</Word>
             <Word>abstract</Word>
             <Word>shared</Word>
+            <Word>mixin</Word>
             <Word>override</Word>
             <Word>final</Word>
             <Word>where</Word>

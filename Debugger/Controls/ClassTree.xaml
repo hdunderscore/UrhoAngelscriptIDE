@@ -22,7 +22,7 @@
                 </HierarchicalDataTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type INTEL:EnumInfo}" ItemsSource="{Binding Values}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
-                        <Image Source="/Images/all/enum.png" />
+                        <Image Source="{Binding ImgSource}" />
                         <TextBlock Text="enum "/>
                         <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
                         <StackPanel.ContextMenu>
@@ -35,7 +35,7 @@
                 </HierarchicalDataTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type INTEL:TypeInfo}" ItemsSource="{Binding PropertyUI}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
-                        <Image Source="/Images/all/class.png" />
+                        <Image Source="{Binding ImgSource}" />
                         <TextBlock Text="{Binding Description}"/>
                         <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
                         <StackPanel.ContextMenu>
@@ -44,6 +44,12 @@
                                 <MenuItem Header="Document" Click="onDocumentClasses" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=Parent}"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type INTEL:TypeList}" ItemsSource="{Binding Types}">
+                    <StackPanel Orientation="Horizontal" Tag="{Binding}">
+                        <Image Source="{Binding ImgSource}" />
+                        <TextBlock Text="Base Types" FontWeight="Bold"/>
                     </StackPanel>
                 </HierarchicalDataTemplate>
                 <DataTemplate DataType="{x:Type INTEL:PropInfo}">
@@ -64,7 +70,7 @@
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type INTEL:FunctionInfo}">
                     <StackPanel Orientation="Horizontal" Tag="{Binding}">
-                        <Image Source="/Images/all/method.png" />
+                        <Image Source="{Binding ImgSource}" />
                         <TextBlock Text="{Binding ReturnType.Name}" Margin="5,2" />
                         <TextBlock Text="{Binding Name}" Margin="2"/>
                         <TextBlock Text="{Binding Inner}" Margin="2"/>

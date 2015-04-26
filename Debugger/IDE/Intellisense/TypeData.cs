@@ -11,7 +11,12 @@ namespace Debugger.IDE.Intellisense
         void ResolveIncompletion(Globals globs);
     }
 
-    public class PropInfo : PossiblyIncomplete
+    public interface TypeImageSource
+    {
+        string ImgSource { get; }
+    }
+
+    public class PropInfo : PossiblyIncomplete, TypeImageSource
     {
         public string Name { get; set; }
         public bool ReadOnly { get; set; }
@@ -54,10 +59,11 @@ namespace Debugger.IDE.Intellisense
     
     public abstract class BaseTypeInfo
     {
+
         public abstract BaseTypeInfo ResolvePropertyPath(Globals globals, params string[] path);
     }
 
-    public class TypeInfo : BaseTypeInfo, PossiblyIncomplete
+    public class TypeInfo : BaseTypeInfo, PossiblyIncomplete, TypeImageSource
     {
         public TypeInfo()
         {
@@ -126,25 +132,49 @@ namespace Debugger.IDE.Intellisense
                     return "template ";
                 if (IsPrimitive)
                     return "prim ";
+                if (IsAbstract && IsShared)
+                    return "shared abstract ";
+                else if (IsAbstract)
+                    return "abstract ";
+                if (IsInterface && IsShared)
+                    return "shared interface ";
+                else if (IsInterface)
+                    return "interface ";
+
+                if (IsMixin) //can mixin's be shared?
+                    return "mixin ";
+                if (IsShared)
+                    return "shared class ";
                 if (this is EnumInfo)
                     return "enum ";
                 return "class ";
             }
         }
 
+        // Type traits
         public bool IsAbstract { get; set; }
         public bool IsTemplate { get; set; }
         public bool IsPrimitive { get; set; }
         public bool IsComplete { get; set; }
+        public bool IsInterface { get; set; }
+        public bool IsShared { get; set; }
+        public bool IsMixin { get; set; }
         public List<string> BaseTypeStr { get; private set; }
         public List<TypeInfo> BaseTypes { get; private set; }
         public string Name { get; set; }
+
+        // Property Data
+        //\todo outsource to PropInfo?
         public Dictionary<string, TypeInfo> Properties { get; private set; }
         public Dictionary<string, int> PropertyLines { get; private set; }
         public List<string> ReadonlyProperties { get; private set; }
         public List<string> ProtectedProperties { get; private set; }
-        public List<string> PrivateProperties { get; private set; }
+        public List<string> PrivateProperties { get; private set; } //Not the same as reaonly
+
+        // Function Data
         public List<FunctionInfo> Functions { get; private set; }
+
+        // Type definition
         public string SourceFile { get; set; }
         public int SourceLine { get; set; }
         public bool CanGoToDef { get { return SourceLine > 0; } }
@@ -154,6 +184,8 @@ namespace Debugger.IDE.Intellisense
             get
             {
                 List<object> ret = new List<object>();
+                if (BaseTypes.Count > 0)
+                    ret.Add(new TypeList(BaseTypes.ToArray()));
                 foreach (string key in Properties.Keys)
                     ret.Add(new PropInfo { Name = key, Type = Properties[key], ReadOnly = ReadonlyProperties.Contains(key), Protected = ProtectedProperties.Contains(key), SourceLine = PropertyLines[key], SourceFile = SourceFile });
                 foreach (FunctionInfo f in Functions)
@@ -175,15 +207,50 @@ namespace Debugger.IDE.Intellisense
                 }
             }
         }
+
+        public string ImgSource
+        {
+            get {
+                if (IsMixin)
+                    return "/Images/all/mixin.png";
+                else if (IsInterface && IsShared)
+                    return "Images/all/sharedinterface.png";
+                else if (IsInterface)
+                    return "/Images/all/interface.png";
+                else if (IsShared)
+                    return "/Images/all/sharedclass.png";
+                return "/Images/all/class.png";
+            }
+        }
     }
 
-    public class FunctionInfo : BaseTypeInfo, PossiblyIncomplete
+    public class TypeList : TypeImageSource
+    {
+        public TypeList(params TypeInfo[] info)
+        {
+            Types = new List<TypeInfo>();
+            Types.AddRange(info);
+        }
+
+        public List<TypeInfo> Types { get; private set; }
+
+        public string ImgSource
+        {
+            get { return "/Images/all/supertypes.png"; }
+        }
+    }
+
+    public class FunctionInfo : BaseTypeInfo, PossiblyIncomplete, TypeImageSource
     {
         public FunctionInfo()
         {
             Params = new List<TypeInfo>();
         }
         public string Name { get; set; }
+        public bool IsPrivate { get; set; }
+        public bool IsProtected { get; set; }
+        public bool IsShared { get; set; }
+        public bool IsImport { get; set; }
         public TypeInfo ReturnType { get; set; }
         public string Inner { get; set; }
         public List<TypeInfo> Params { get; set; }
@@ -211,15 +278,54 @@ namespace Debugger.IDE.Intellisense
                     Params[i] = globs.GetTypeInfo(Params[i].Name);
             }
         }
+
+        public string ImgSource
+        {
+            get {
+                if (Name.StartsWith("op"))
+                    return "/Images/all/opmethod.png";
+                if (this is FuncDefInfo) //Bad bad bad
+                {
+                    if (IsShared)
+                        return "/Images/all/sharedevent.png";
+                    else if (IsImport) //\todo Is this scenario possible?
+                        return "/Images/all/sharedimportmethod.png";
+                    return "/Images/all/event.png";
+                }
+                if (IsShared)
+                    return "/Images/all/sharedmethod.png";
+                else if (IsImport)
+                    return "/Images/all/importmethod.png";
+                else if (IsPrivate)
+                    return "/Images/all/primethod.png";
+                else if (IsProtected)
+                    return "/Images/all/promethod.png";
+                return "/Images/all/method.png";
+            }
+        }
     }
 
-    public class EnumInfo : TypeInfo
+    public class FuncDefInfo : FunctionInfo
+    {
+
+    }
+
+    public class EnumInfo : TypeInfo, TypeImageSource
     {
         public EnumInfo()
         {
             Values = new List<string>();
         }
         public List<string> Values { get; private set; }
+
+        string ImgSource
+        {
+            get {
+                if (IsShared)
+                    return "/Images/all/sharedenum.png";
+                return "/Images/all/enum.png";
+            }
+        }
     }
 
     public class TemplateInfo : TypeInfo
@@ -231,7 +337,7 @@ namespace Debugger.IDE.Intellisense
         public TypeInfo WrappedType { get; set; }
     }
 
-    public class Globals
+    public class Globals : BaseTypeInfo
     {
         public Globals(bool createPrimitives)
         {
@@ -427,7 +533,7 @@ namespace Debugger.IDE.Intellisense
             Functions.Add(fi);
         }
 
-        public IEnumerable<FunctionInfo> GetFunctions(string name)
+        public IEnumerable<FunctionInfo> GetFunctions(string name, bool includeBase)
         {
             List<FunctionInfo> ret = new List<FunctionInfo>();
             foreach (FunctionInfo fi in Functions)
@@ -435,8 +541,8 @@ namespace Debugger.IDE.Intellisense
                 if (name == null || name.Equals(fi.Name))
                     ret.Add(fi);
             }
-            if (Parent != null)
-                ret.AddRange(Parent.GetFunctions(name));
+            if (Parent != null && includeBase)
+                ret.AddRange(Parent.GetFunctions(name, includeBase));
             return ret;
         }
 
@@ -472,12 +578,12 @@ namespace Debugger.IDE.Intellisense
             return false;
         }
 
-        public BaseTypeInfo GetProperty(string name)
+        public BaseTypeInfo GetProperty(string name, bool includeBase)
         {
             if (Properties.ContainsKey(name))
                 return Properties[name];
-            if (Parent != null)
-                return Parent.GetProperty(name);
+            if (Parent != null && includeBase)
+                return Parent.GetProperty(name, includeBase);
             return null;
         }
 
@@ -495,6 +601,21 @@ namespace Debugger.IDE.Intellisense
             Properties[name] = ti;
             PropertyLines[name] = line;
             PropertyFiles[name] = file;
+        }
+
+        // Left mostly to when used as a namespace
+        public override BaseTypeInfo ResolvePropertyPath(Globals globals, params string[] path)
+        {
+            if (Classes.ContainsKey(path[0]))
+                return Classes[path[0]];
+            else if (Namespaces.ContainsKey(path[0]))
+                return Namespaces[path[0]];
+            foreach (FunctionInfo f in Functions)
+            {
+                if (f.Name.Equals(path[0]))
+                    return f;
+            }
+            return null;
         }
     }
 }

@@ -36,21 +36,21 @@ namespace Debugger.IDE.Intellisense {
 
         void _resolveNames(Globals globals) {
             foreach (string key in globals.GetPropertyNames()) {
-                TypeInfo t = globals.GetProperty(key) as TypeInfo;
+                TypeInfo t = globals.GetProperty(key, true) as TypeInfo;
                 if (t != null)
                 {
                     if (!t.IsComplete)
                         globals.AddProperty(key, globals.GetTypeInfo(t.Name), -1, "");
                     if (t is TemplateInst)
                     {
-                        TemplateInst ti = globals.GetProperty(key) as TemplateInst;
+                        TemplateInst ti = globals.GetProperty(key, true) as TemplateInst;
                         if (!ti.WrappedType.IsComplete)
                             ti.WrappedType = globals.GetTypeInfo(ti.WrappedType.Name);
                     }
                 }
             }
 
-            foreach (FunctionInfo f in globals.GetFunctions(null)) {
+            foreach (FunctionInfo f in globals.GetFunctions(null, true)) {
                 f.ResolveIncompletion(globals);
             }
 

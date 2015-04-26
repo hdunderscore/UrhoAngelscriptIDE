@@ -94,17 +94,17 @@ namespace Debugger.IDE.Intellisense.Sources
                 string[] words = IntellisenseHelper.DotPath(editor.Document, curOfs - 1, line - 1);
                 if (words.Length > 1)
                 {
-                    for (int i = 0; i < words.Length - 1; ++i)
+                    for (int i = 0; i < words.Length; ++i)
                     {
                         if (info == null)
                         {
                             info = reso.GetClassType(editor.Document, editor.TextArea.Caret.Line, words[i]);
+                            if (info == null && GetGlobals().ContainsProperty(words[i]))
+                                info = GetGlobals().GetProperty(words[i], true);
                         }
                         else if (info != null)
                         {
                             info = info.ResolvePropertyPath(GetGlobals(), words[i]);
-                            //if (info.Properties.ContainsKey(words[i]))
-                            //    info = info.Properties[words[i]];
                         }
                     }
                 }
@@ -115,14 +115,15 @@ namespace Debugger.IDE.Intellisense.Sources
                     info = reso.GetClassType(editor.Document, editor.TextArea.Caret.Line, word);
                 //attempt to resolve it from globals
                 if (info == null && GetGlobals() != null && GetGlobals().ContainsProperty(word))
-                    info = GetGlobals().GetProperty(word);
+                    info = GetGlobals().GetProperty(word, true);
                 if (info == null && word.Contains("::"))
                 {
                     if (GetGlobals() == null)
                         return;
                     if (word.Length > 2)
                     {
-                        if (GetGlobals().ContainsTypeInfo(word.Replace("::", "")))
+                        string ns = word.Replace("::", "");
+                        if (GetGlobals().ContainsTypeInfo(ns))
                         {
                             EnumInfo ti = GetGlobals().GetTypeInfo(word.Replace("::", "")) as EnumInfo;
                             if (ti != null)
@@ -148,12 +149,27 @@ namespace Debugger.IDE.Intellisense.Sources
                         else
                         { //list global functions
                             Globals globs = GetGlobals();
+                            bool asNS = false;
+                            if (globs.ContainsNamespace(ns))
+                            {
+                                asNS = true;
+                                globs = globs.GetNamespace(ns);
+                            }
                             currentComp = new CompletionWindow(editor.TextArea);
                             IList<ICompletionData> data = currentComp.CompletionList.CompletionData;
                             foreach (string str in globs.GetPropertyNames())
-                                data.Add(new PropertyCompletionData(globs.GetProperty(str) as TypeInfo, str));
-                            foreach (FunctionInfo fi in globs.GetFunctions(null))
+                            {
+                                TypeInfo ti = globs.GetProperty(str, !asNS) as TypeInfo;
+                                if (ti != null)
+                                    data.Add(new PropertyCompletionData(ti, str));
+                            }
+                            foreach (FunctionInfo fi in globs.GetFunctions(null, false))
                                 data.Add(new FunctionCompletionData(fi));
+                            if (asNS) //Include classes
+                            {
+                                foreach (TypeInfo ti in globs.TypeInfo)
+                                    data.Add(new ClassCompletionData(ti));
+                            }
                             currentComp.Show();
                             currentComp.Closed += comp_Closed;
                             return;
@@ -186,7 +202,7 @@ namespace Debugger.IDE.Intellisense.Sources
             {
 
                 NameResolver reso = new NameResolver(GetGlobals(), scanner);
-                TypeInfo info = null;
+                BaseTypeInfo info = null;
                 FunctionInfo func = null;
                 string[] words = IntellisenseHelper.DotPath(editor.Document, curOfs - 2, line - 1);
                 if (words.Length > 1)
@@ -195,7 +211,8 @@ namespace Debugger.IDE.Intellisense.Sources
                     {
                         if (i == words.Length - 1 && info != null)
                         {
-                            func = info.Functions.FirstOrDefault(f => f.Name.Equals(words[i]));
+                            if (info is TypeInfo)
+                                func = ((TypeInfo)info).Functions.FirstOrDefault(f => f.Name.Equals(words[i]));
                         }
                         else
                         {
@@ -203,36 +220,40 @@ namespace Debugger.IDE.Intellisense.Sources
                             {
                                 info = reso.GetClassType(editor.Document, editor.TextArea.Caret.Line, words[i]);
                             }
-                            else if (info != null)
+                            else if (info != null && info is TypeInfo)
                             {
-                                if (info.Properties.ContainsKey(words[i]))
-                                    info = info.Properties[words[i]];
+                                if (((TypeInfo)info).Properties.ContainsKey(words[i]))
+                                    info = ((TypeInfo)info).Properties[words[i]];
                             }
                         }
                     }
                 }
-                if (func != null)
+                if (func != null && info != null)
                 {
                     List<FunctionInfo> data = new List<FunctionInfo>();
-                    foreach (FunctionInfo fi in info.Functions.Where(f => { return f.Name.Equals(func.Name); }))
-                        data.Add(fi);
-                    if (data.Count > 0)
+                    if (info is TypeInfo)
                     {
-                        OverloadInsightWindow window = new OverloadInsightWindow(editor.TextArea);
-                        window.Provider = new OverloadProvider(info, data.ToArray());
-                        window.Show();
-                        //compWindow.Closed += comp_Closed;
+                        TypeInfo ti = (TypeInfo)info;
+                        foreach (FunctionInfo fi in ti.Functions.Where(f => { return f.Name.Equals(func.Name); }))
+                            data.Add(fi);
+                        if (data.Count > 0)
+                        {
+                            OverloadInsightWindow window = new OverloadInsightWindow(editor.TextArea);
+                            window.Provider = new OverloadProvider(ti, data.ToArray());
+                            window.Show();
+                            //compWindow.Closed += comp_Closed;
+                        }
                     }
                 }
                 else if (func == null && info == null) // Found nothing
                 {
                     List<FunctionInfo> data = new List<FunctionInfo>();
-                    foreach (FunctionInfo fi in GetGlobals().GetFunctions(words[1]))
+                    foreach (FunctionInfo fi in GetGlobals().GetFunctions(words[1], true))
                         data.Add(fi);
                     if (data.Count > 0)
                     {
                         OverloadInsightWindow window = new OverloadInsightWindow(editor.TextArea);
-                        window.Provider = new OverloadProvider(info, data.ToArray());
+                        window.Provider = new OverloadProvider(null, data.ToArray());
                         window.Show();
                         //compWindow.Closed += comp_Closed;
                     }
@@ -287,7 +308,7 @@ namespace Debugger.IDE.Intellisense.Sources
                         if (str.StartsWith(word))
                             data.Add(new ClassCompletionData(GetGlobals().GetTypeInfo(str)));
                     }
-                    foreach (FunctionInfo fun in GetGlobals().GetFunctions(null))
+                    foreach (FunctionInfo fun in GetGlobals().GetFunctions(null, true))
                     {
                         if (fun.Name.StartsWith(word))
                             data.Add(new FunctionCompletionData(fun));
@@ -318,7 +339,7 @@ namespace Debugger.IDE.Intellisense.Sources
                         string[] words = IntellisenseHelper.ExtractPath(editor.Document, offset, pos.Value.Location.Line, out isFunc);
                         if (words != null && words.Length > 0)
                         {
-                            TypeInfo info = null;
+                            BaseTypeInfo info = null;
                             FunctionInfo func = null;
                             NameResolver reso = new NameResolver(globs, scanner);
                             if (words.Length > 1)
@@ -327,7 +348,8 @@ namespace Debugger.IDE.Intellisense.Sources
                                 {
                                     if (i == words.Length - 1 && info != null && isFunc)
                                     {
-                                        func = info.Functions.FirstOrDefault(f => f.Name.Equals(words[i]));
+                                        if (info is TypeInfo)
+                                            func = ((TypeInfo)info).Functions.FirstOrDefault(f => f.Name.Equals(words[i]));
                                     }
                                     else
                                     {
@@ -335,10 +357,10 @@ namespace Debugger.IDE.Intellisense.Sources
                                         {
                                             info = reso.GetClassType(editor.Document, editor.TextArea.Caret.Line, words[i]);
                                         }
-                                        else if (info != null)
+                                        else if (info != null && info is TypeInfo)
                                         {
-                                            if (info.Properties.ContainsKey(words[i]))
-                                                info = info.Properties[words[i]];
+                                            if (((TypeInfo)info).Properties.ContainsKey(words[i]))
+                                                info = ((TypeInfo)info).Properties[words[i]];
                                         }
                                     }
                                 }
@@ -360,10 +382,10 @@ namespace Debugger.IDE.Intellisense.Sources
 
                             string msg = "";
                             // Ask documentation for the information
-                            if (info != null && func != null)
+                            if (info != null && func != null && info is TypeInfo)
                             { //member function
                                 msg = func.ReturnType.Name + " " + func.Name;
-                                string m = IDEProject.inst().DocDatabase.GetDocumentationFor(info.Name + "::" + func.Name + func.Inner);
+                                string m = IDEProject.inst().DocDatabase.GetDocumentationFor(((TypeInfo)info).Name + "::" + func.Name + func.Inner);
                                 if (m != null)
                                     msg += "\r\n" + m;
                             }
@@ -374,10 +396,10 @@ namespace Debugger.IDE.Intellisense.Sources
                                 if (m != null)
                                     msg += "\r\n" + m;
                             }
-                            else if (info != null)
+                            else if (info != null && info is TypeInfo)
                             { //global or member type
-                                msg = info.Name;
-                                string m = IDEProject.inst().DocDatabase.GetDocumentationFor(info.Name);
+                                msg = ((TypeInfo)info).Name;
+                                string m = IDEProject.inst().DocDatabase.GetDocumentationFor(((TypeInfo)info).Name);
                                 if (m != null)
                                     msg += "\r\n" + m;
                             }

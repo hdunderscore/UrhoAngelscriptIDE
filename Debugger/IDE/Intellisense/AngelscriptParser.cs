@@ -18,12 +18,13 @@ namespace Debugger.IDE.Intellisense
     /// </summary>
     public static class AngelscriptParser
     {
-        static string blockComments = @"/\*(.*?)\*/";
-        static string lineComments = @"//(.*?)\r?\n";
-        static string strings = @"""((\\[^\n]|[^""\n])*)""";
-        static string verbatimStrings = @"@(""[^""]*"")+";
+        static readonly string blockComments = @"/\*(.*?)\*/";
+        static readonly string lineComments = @"//(.*?)\r?\n";
+        static readonly string strings = @"""((\\[^\n]|[^""\n])*)""";
+        static readonly string verbatimStrings = @"@(""[^""]*"")+";
 
-        static char[] BREAKCHARS = { ' ', ':' };
+        static readonly char[] BREAKCHARS = { ' ', ':' };
+        static readonly char[] SPACECHAR = { ' ' };
 
         public static Globals Parse(string path, string fileCode, string[] includePaths)
         {
@@ -110,7 +111,7 @@ namespace Debugger.IDE.Intellisense
             // Resolve incomplete names
             foreach (string key in globals.GetPropertyNames())
             {
-                TypeInfo t = globals.GetProperty(key) as TypeInfo;
+                TypeInfo t = globals.GetProperty(key, true) as TypeInfo;
                 if (t != null)
                 {
                     if (!t.IsComplete)
@@ -124,7 +125,7 @@ namespace Debugger.IDE.Intellisense
                 }
             }
 
-            foreach (FunctionInfo f in globals.GetFunctions(null))
+            foreach (FunctionInfo f in globals.GetFunctions(null, true))
             {
                 f.ResolveIncompletion(globals);
             }
@@ -189,22 +190,28 @@ namespace Debugger.IDE.Intellisense
                 string[] tokens = line.Split(BREAKCHARS);
 
                 // Class / Interface/ Template type
-                if (tokens[0].ToLower().Equals("class") || tokens[0].ToLower().Equals("abstract") || tokens[0].ToLower().Equals("interface") || tokens[0].ToLower().Equals("template"))
+                if (ResemblesClass(line))
                 {
                     int abstractIdx = Array.IndexOf(tokens, "abstract");
                     int sharedIdx = Array.IndexOf(tokens, "shared");
                     int templateIdx = Array.IndexOf(tokens, "template");
+                    int mixinIdx = Array.IndexOf(tokens, "mixin");
+                    int finalIdx = Array.IndexOf(tokens, "final");
 
-                    int classTermIdx = Math.Max(abstractIdx, Math.Max(sharedIdx, templateIdx)) + 1;
+                    int classTermIdx = Math.Max(abstractIdx, Math.Max(sharedIdx, Math.Max(templateIdx, Math.Max(mixinIdx, finalIdx)))) + 1;
 
-                    bool isInterface = classTermIdx.Equals("interface");
+                    bool isInterface = tokens[classTermIdx].Equals("interface");
                     if (templateIdx != -1)
                     {
                         //Resolve template type?
                     }
 
                     string className = tokens[classTermIdx + 1];
-                    TypeInfo ti = new TypeInfo { Name = className, IsTemplate = templateIdx != -1, IsAbstract = abstractIdx != -1, SourceLine = lineNumber, SourceFile = defName };
+                    TypeInfo ti = new TypeInfo { Name = className, 
+                        IsTemplate = templateIdx != -1, IsShared = sharedIdx != -1,
+                        IsAbstract = abstractIdx != -1, IsMixin = mixinIdx != -1,
+                        IsInterface = isInterface,
+                        SourceLine = lineNumber, SourceFile = defName };
 
                     // Get any baseclasses, baseclass must appear first
                     for (int i = classTermIdx + 2; i < tokens.Length; ++i)
@@ -237,7 +244,8 @@ namespace Debugger.IDE.Intellisense
                 {
                     if (ResemblesFunction(line)) // Global/namespace function
                     {
-                        globals.AddFunction(_parseFunction(line, globals, lineNumber, defName));
+                        FunctionInfo fi = _parseFunction(line, globals, lineNumber, defName);
+                        globals.AddFunction(fi);
                     }
                     else if (ResemblesProperty(line, globals)) // Global/namespace property
                     {
@@ -376,35 +384,49 @@ namespace Debugger.IDE.Intellisense
             int lastParen = line.LastIndexOf(')');
             string baseDecl = line.Substring(0, firstParen);
             string paramDecl = line.Substring(firstParen, lastParen - firstParen + 1); //-1 for the ;
-            string[] nameParts = baseDecl.Split(' ');
+            string[] nameParts = baseDecl.Split(SPACECHAR, StringSplitOptions.RemoveEmptyEntries);
             TypeInfo retType = null;
 
+            int sharedIdx = Array.IndexOf(nameParts, "shared");
+            int importIdx = Array.IndexOf(nameParts, "import");
+            int funcdefIdx = Array.IndexOf(nameParts, "funcdef");
+
+            // Return type is at this index
+            int startIdx = Math.Max(sharedIdx, Math.Max(importIdx, funcdefIdx)) + 1;
+
             //TODO: split the name parts
-            if (globals.ContainsTypeInfo(nameParts[0]))
+            if (globals.ContainsTypeInfo(nameParts[startIdx]))
             {
-                retType = globals.GetTypeInfo(nameParts[0]);
+                retType = globals.GetTypeInfo(nameParts[startIdx]);
             }
-            else if (nameParts[0].Contains('<'))
+            else if (nameParts[startIdx].Contains('<'))
             {
-                string wrappedType = nameParts[0].Extract('<', '>');
-                string templateType = nameParts[0].Replace(string.Format("<{0}>", wrappedType), "");
+                string wrappedType = nameParts[startIdx].Extract('<', '>');
+                string templateType = nameParts[startIdx].Replace(string.Format("<{0}>", wrappedType), "");
                 TypeInfo wrapped = globals.GetTypeInfo(wrappedType);
-                TemplateInst ti = new TemplateInst() { Name = nameParts[0], IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = wrappedType, IsComplete = false, SourceLine = lineNumber, SourceFile = defName } };
+                TemplateInst ti = new TemplateInst() { Name = nameParts[startIdx], IsTemplate = true, WrappedType = wrapped != null ? wrapped : new TypeInfo { Name = wrappedType, IsComplete = false, SourceLine = lineNumber, SourceFile = defName } };
                 retType = ti;
             }
             else
             {
-                retType = new TypeInfo() { Name = nameParts[0], IsPrimitive = false, SourceLine = lineNumber, SourceFile = defName };
+                retType = new TypeInfo() { Name = nameParts[startIdx], IsPrimitive = false, SourceLine = lineNumber, SourceFile = defName };
             }
-            return new FunctionInfo { Name = nameParts[1], ReturnType = retType, Inner = paramDecl, SourceLine = lineNumber, SourceFile = defName };
+            if (funcdefIdx == -1)
+            {
+                return new FunctionInfo { Name = nameParts[startIdx+1], ReturnType = retType, Inner = paramDecl, 
+                    IsImport = importIdx != -1, IsShared = sharedIdx != -1,
+                    SourceLine = lineNumber, SourceFile = defName };
+            } 
+            else
+            {
+                return new FuncDefInfo { Name = nameParts[startIdx + 1], ReturnType = retType, Inner = paramDecl,
+                    IsImport = importIdx != -1, IsShared = sharedIdx != -1, 
+                    SourceLine = lineNumber, SourceFile = defName };
+            }
         }
 
-        static bool ResemblesFunction(string line)
+        public static bool ResemblesFunction(string line)
         {
-            if (line.StartsWith("funcdef")) //don't scan func defs??
-                return false;
-            if (line.StartsWith("import")) //don't scan imports??
-                return false;
             int equalsPos = line.IndexOf('=');
             if (equalsPos == -1) // Scale it out to max, this is necessary so the comparison of default params vs RHS assignment works
                 equalsPos = int.MaxValue;
@@ -414,7 +436,7 @@ namespace Debugger.IDE.Intellisense
             return false;
         }
 
-        static bool ResemblesProperty(string line, Globals globals)
+        public static bool ResemblesProperty(string line, Globals globals)
         {
             string[] tokens = line.Split(BREAKCHARS);
             if (tokens.Length >= 2)
@@ -434,6 +456,13 @@ namespace Debugger.IDE.Intellisense
                 }
             }
             return false;
+        }
+
+        public static bool ResemblesClass(string line)
+        {
+            string[] tokens = line.Split(BREAKCHARS);
+            // struct is here to cover HLSL
+            return Array.IndexOf(tokens, "class") != -1 || Array.IndexOf(tokens, "interface") != -1 || Array.IndexOf(tokens, "struct") != -1;
         }
     }
 }

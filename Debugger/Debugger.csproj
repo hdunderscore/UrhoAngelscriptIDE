@@ -453,6 +453,44 @@
   <ItemGroup>
     <Resource Include="Images\all\warning.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\breakpoints.png" />
+    <Resource Include="Images\all\callstack.png" />
+    <Resource Include="Images\all\classbrowser.png" />
+    <Resource Include="Images\all\filebrowser.png" />
+    <Resource Include="Images\all\localvariables.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\event.png" />
+    <Resource Include="Images\all\importmethod.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\subtypes.png" />
+    <Resource Include="Images\all\supertypes.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\mixin.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\sharedclass.png" />
+    <Resource Include="Images\all\sharedenum.png" />
+    <Resource Include="Images\all\sharedevent.png" />
+    <Resource Include="Images\all\sharedimportmethod.png" />
+    <Resource Include="Images\all\sharedinterface.png" />
+    <Resource Include="Images\all\sharedmethod.png" />
+    <Resource Include="Images\all\sharedproperty.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\opmethod.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\search.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\all\output.png" />
+    <Resource Include="Images\all\pc.png" />
+    <Resource Include="Images\all\this.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

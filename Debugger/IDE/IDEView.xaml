@@ -71,7 +71,13 @@
             <!-- File List -->
             <Grid Grid.Column="0" Grid.Row="0" Grid.RowSpan="3">
                 <TabControl Name="leftSideTabs">
-                    <TabItem Header="Files">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/filebrowser.png" Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Files" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <TreeView Name="fileTree" ItemsSource="{Binding Children}">
                             <TreeView.ItemContainerStyle>
                                 <Style TargetType="{x:Type TreeViewItem}">
@@ -126,13 +132,31 @@
                             </TreeView.Resources>
                         </TreeView>
                     </TabItem>
-                    <TabItem Header="Classes" Name="classesTab">
+                    <TabItem Name="classesTab">
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/classbrowser.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Classes" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <ctrl:ClassTree x:Name="objectTree" />
                     </TabItem>
-                    <TabItem Name="globalsTab" Header="Globals">
+                    <TabItem Name="globalsTab" >
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/pc.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Globals" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <ctrl:ClassTree x:Name="globalsTree" />
                     </TabItem>
-                    <TabItem Name="locals" Header="Local Types">
+                    <TabItem Name="locals">
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/localvariables.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Local Types" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <ctrl:ClassTree x:Name="localsTree" />
                     </TabItem>
                 </TabControl>
@@ -157,7 +181,13 @@
 
             <Grid Grid.Column="2" Grid.Row="2" Grid.ColumnSpan="3">
                 <TabControl Name="logTabs">
-                    <TabItem Header="Output">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/output.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Output" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <TextBox Name="txtConsole" IsReadOnly="True" Text="{Binding CompilerOutput}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"/>
                     </TabItem>
                     <TabItem>
@@ -248,7 +278,13 @@
                             </DataGrid.Resources>
                         </DataGrid>
                     </TabItem>
-                    <TabItem Header="Search">
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Images/all/search.png"  Margin="4,0" Width="16" Height="16"/>
+                                <Label Content="Search" />
+                            </StackPanel>
+                        </TabItem.Header>
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
