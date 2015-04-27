@@ -17,22 +17,28 @@ namespace Debugger.IDE.Intellisense.Sources
     {
         static Globals HLSLGlobals;
         Globals documentGlobals_;
-        public override Globals GetGlobals()
+
+        public Globals GetHLSLGlobals()
         {
             if (HLSLGlobals == null)
             {
-                //parse and load the HLSL globals
-                ASParser parser = new ASParser();
+                //parse and load the GLSL globals
+                DumpParser parser = new DumpParser();
                 Globals globs = new Globals(true);
                 parser.ParseDumpFile(FileOperationAPIWrapper.GetResourceStringReader("Debugger.Resources.HLSL.h"), globs);
                 HLSLGlobals = globs;
             }
+            return HLSLGlobals;
+        }
+
+        public override Globals GetGlobals()
+        {
             if (documentGlobals_ != null)
             {
-                documentGlobals_.Parent = HLSLGlobals;
+                documentGlobals_.Parent = GetHLSLGlobals();
                 return documentGlobals_;
             }
-            return HLSLGlobals;
+            return GetHLSLGlobals();
         }
 
         public override void HookEditor(ICSharpCode.AvalonEdit.TextEditor editor, FileBaseItem item)
@@ -61,7 +67,8 @@ namespace Debugger.IDE.Intellisense.Sources
         {
             MainWindow.inst().Dispatcher.Invoke(delegate()
             {
-                IDEProject.inst().LocalTypes = documentGlobals_ = AngelscriptParser.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
+                Parsers.HLSLParser asp = new Parsers.HLSLParser(GetHLSLGlobals());
+                IDEProject.inst().LocalTypes = documentGlobals_ = asp.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
             });
         }
     }

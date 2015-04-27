@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Debugger.IDE.Intellisense
+namespace Debugger.IDE.Intellisense.Parsers
 {
     /// <summary>
     /// A more complete psuedo-Angelscript parser
@@ -16,17 +16,9 @@ namespace Debugger.IDE.Intellisense
     /// Use DepthScanner to track depth awareness
     /// Inline #include files
     /// </summary>
-    public static class AngelscriptParser
+    public class AngelscriptParser : ParserBase
     {
-        static readonly string blockComments = @"/\*(.*?)\*/";
-        static readonly string lineComments = @"//(.*?)\r?\n";
-        static readonly string strings = @"""((\\[^\n]|[^""\n])*)""";
-        static readonly string verbatimStrings = @"@(""[^""]*"")+";
-
-        static readonly char[] BREAKCHARS = { ' ', ':' };
-        static readonly char[] SPACECHAR = { ' ' };
-
-        public static Globals Parse(string path, string fileCode, string[] includePaths)
+        public override Globals Parse(string path, string fileCode, string[] includePaths)
         {
             Globals ret = new Globals(false);
 
@@ -44,66 +36,7 @@ namespace Debugger.IDE.Intellisense
             return ret;
         }
 
-        //http://stackoverflow.com/questions/3524317/regex-to-strip-line-comments-from-c-sharp
-        static string StripComments(string fileCode)
-        {
-            return Regex.Replace(fileCode,
-                blockComments + "|" + lineComments + "|" + strings + "|" + verbatimStrings,
-                me =>
-                {
-                    if (me.Value.StartsWith("/*") || me.Value.StartsWith("//"))
-                        return me.Value.StartsWith("//") ? Environment.NewLine : "";
-                    // Keep the literal strings
-                    return me.Value;
-                },
-                RegexOptions.Singleline);
-        }
-
-        static string ProcessIncludes(string filePath, string fileCode, string[] dirs, List<string> existingPaths)
-        {
-            StringReader rdr = new StringReader(fileCode);
-            string line = null;
-            StringBuilder sb = new StringBuilder();
-            string prefixFmt = "{0}|{1}>{2}"; //Prefix with fileName|line#
-            int codeLine = 0;
-            while ((line = rdr.ReadLine()) != null)
-            {
-                ++codeLine;
-                if (line.Contains("#include"))
-                {
-                    string[] parts = line.Trim().Split(' ');
-                    foreach (string s in parts)
-                    {
-                        if (s.Contains('"'))
-                        {
-                            string fileName = s.Replace("\"", "");
-                            foreach (string d in dirs)
-                            {
-                                string pathCombo = System.IO.Path.Combine(d, fileName);
-                                if (System.IO.File.Exists(pathCombo))
-                                {
-                                    if (!existingPaths.Contains(pathCombo))
-                                    {
-                                        string incCode = System.IO.File.ReadAllText(pathCombo);
-                                        sb.AppendLine(ProcessIncludes(pathCombo, incCode, dirs, existingPaths));
-                                        existingPaths.Add(pathCombo);
-                                        break;
-                                    }
-                                    else
-                                        throw new Exception(String.Format("Circular include referenced {0}", pathCombo));
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-                else
-                    sb.AppendLine(String.Format(prefixFmt, filePath, codeLine, line));
-            }
-            return sb.ToString();
-        }
-
-        static void Parse(StringReader rdr, DepthScanner scanner, Globals globals)
+        protected void Parse(StringReader rdr, DepthScanner scanner, Globals globals)
         {
             int currentLine = 0;
             ParseNamespace(rdr, globals, scanner, ref currentLine, false);
@@ -136,23 +69,7 @@ namespace Debugger.IDE.Intellisense
             }
         }
 
-        static void ExtractLineInfo(ref string lineIn, out string lineOut, out int lineNumOut)
-        {
-            if (String.IsNullOrWhiteSpace(lineIn))
-            {
-                lineOut = "";
-                lineNumOut = -1;
-                return;
-            }
-            int vertidx = lineIn.IndexOf('|');
-            int tailidx = lineIn.IndexOf('>');
-            lineOut = lineIn.Substring(0, vertidx);
-            string parseLine = lineIn.Substring(vertidx + 1, tailidx - vertidx - 1);
-            lineNumOut = int.Parse(parseLine);
-            lineIn = lineIn.Substring(tailidx+1);
-        }
-
-        static void ParseNamespace(StringReader rdr, Globals globals, DepthScanner scanner, ref int currentLine, bool asNamespace)
+        protected void ParseNamespace(StringReader rdr, Globals globals, DepthScanner scanner, ref int currentLine, bool asNamespace)
         {
             string l = "";
             int depth = scanner.GetBraceDepth(currentLine);
@@ -165,6 +82,8 @@ namespace Debugger.IDE.Intellisense
                 
                 ++currentLine;
                 if (l.Trim().StartsWith("//"))
+                    continue;
+                if (l.Trim().StartsWith("#"))
                     continue;
                 int curDepth = scanner.GetBraceDepth(currentLine-1);
                 if (!asNamespace)
@@ -244,8 +163,12 @@ namespace Debugger.IDE.Intellisense
                 {
                     if (ResemblesFunction(line)) // Global/namespace function
                     {
-                        FunctionInfo fi = _parseFunction(line, globals, lineNumber, defName);
-                        globals.AddFunction(fi);
+                        try
+                        {
+                            FunctionInfo fi = _parseFunction(rdr, line, globals, lineNumber, defName);
+                            globals.AddFunction(fi);
+                        }
+                        catch (Exception ex) { }
                     }
                     else if (ResemblesProperty(line, globals)) // Global/namespace property
                     {
@@ -284,7 +207,7 @@ namespace Debugger.IDE.Intellisense
             }
         }
 
-        static void ParseClass(StringReader rdr, Globals targetGlobals, DepthScanner scanner, TypeInfo targetType, ref int currentLine)
+        protected void ParseClass(StringReader rdr, Globals targetGlobals, DepthScanner scanner, TypeInfo targetType, ref int currentLine)
         {
             int depth = scanner.GetBraceDepth(currentLine);
             string l = "";
@@ -306,7 +229,7 @@ namespace Debugger.IDE.Intellisense
                     continue;
                 if (ResemblesFunction(l))
                 {
-                    targetType.Functions.Add(_parseFunction(l, targetGlobals, lineNumber, defName));
+                    targetType.Functions.Add(_parseFunction(rdr, l, targetGlobals, lineNumber, defName));
                 }
                 else if (ResemblesProperty(l, targetGlobals))
                 {
@@ -356,7 +279,7 @@ namespace Debugger.IDE.Intellisense
             }
         }
 
-        static void ParseEnum(string line, StringReader rdr, Globals globals, ref int currentLine) {
+        protected void ParseEnum(string line, StringReader rdr, Globals globals, ref int currentLine) {
             string[] nameparts = line.Split(' ');
             string enumName = nameparts[1];
             List<string> enumValues = new List<string>();
@@ -378,10 +301,22 @@ namespace Debugger.IDE.Intellisense
             }
         }
 
-        static FunctionInfo _parseFunction(string line, Globals globals, int lineNumber, string defName)
+        protected FunctionInfo _parseFunction(StringReader rdr, string line, Globals globals, int lineNumber, string defName)
         {
             int firstParen = line.IndexOf('(');
             int lastParen = line.LastIndexOf(')');
+            while (lastParen == -1)
+            {
+                string l = rdr.ReadLine();
+                string d = "";
+                int ln = 0;
+                ExtractLineInfo(ref l, out d, out ln);
+                l = l.Trim();
+                if (l.StartsWith("#")) //#if's in shaders
+                    continue;
+                line += l;
+                lastParen = line.LastIndexOf(')');
+            }
             string baseDecl = line.Substring(0, firstParen);
             string paramDecl = line.Substring(firstParen, lastParen - firstParen + 1); //-1 for the ;
             string[] nameParts = baseDecl.Split(SPACECHAR, StringSplitOptions.RemoveEmptyEntries);
@@ -425,7 +360,7 @@ namespace Debugger.IDE.Intellisense
             }
         }
 
-        public static bool ResemblesFunction(string line)
+        public override bool ResemblesFunction(string line)
         {
             int equalsPos = line.IndexOf('=');
             if (equalsPos == -1) // Scale it out to max, this is necessary so the comparison of default params vs RHS assignment works
@@ -436,7 +371,7 @@ namespace Debugger.IDE.Intellisense
             return false;
         }
 
-        public static bool ResemblesProperty(string line, Globals globals)
+        public override bool ResemblesProperty(string line, Globals globals)
         {
             string[] tokens = line.Split(BREAKCHARS);
             if (tokens.Length >= 2)
@@ -458,7 +393,7 @@ namespace Debugger.IDE.Intellisense
             return false;
         }
 
-        public static bool ResemblesClass(string line)
+        public override bool ResemblesClass(string line)
         {
             string[] tokens = line.Split(BREAKCHARS);
             // struct is here to cover HLSL

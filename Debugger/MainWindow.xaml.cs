@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Reflection;
 
 namespace Debugger {
     /// <summary>
@@ -32,6 +33,15 @@ namespace Debugger {
             inst_ = this;
             errHandler = new ErrorHandler();
             this.ContentLoader = new ContentLoader();
+
+            TextBlock tb = new TextBlock();
+            tb.Opacity = 0.025;
+            tb.Text = "asDevelop v" + Assembly.GetAssembly(typeof(MainWindow)).GetName().Version.Major + "." + Assembly.GetAssembly(typeof(MainWindow)).GetName().Version.Minor;
+            tb.FontSize = 48;
+            tb.FontWeight = FontWeights.Bold;
+            tb.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            tb.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+            BackgroundContent = tb;
 
             Net.DebugClient client = new Net.DebugClient(new Debugger.Debug.SessionData(""));
             pluginManager = new PluginManager("plugins");

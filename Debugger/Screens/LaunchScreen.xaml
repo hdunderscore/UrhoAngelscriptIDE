@@ -8,7 +8,7 @@
     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal">
             <StackPanel Margin="20,0" MinWidth="160">
-                <Label Content="Projects"/>
+                <Label Content="Projects" />
                 <Separator />
                 <StackPanel Orientation="Horizontal">
                     <Button Name="btnNewProject" Content="New Project" Style="{StaticResource StyledButton}" Click="btnNewProject_Click"/>

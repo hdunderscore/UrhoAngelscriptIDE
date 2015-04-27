@@ -44,7 +44,39 @@ namespace Debugger.Debug {
         public string Value { 
             get { return evaluatedAs_; } 
             set { 
-                evaluatedAs_ = value; 
+                evaluatedAs_ = value;
+                if (Debugger.Net.DebugClient.inst() != null)
+                {
+                    JWrapper root = null;
+                    if (path_.StartsWith("this."))
+                        root = Debugger.Debug.SessionData.inst().ThisData;
+                    else if (path_.StartsWith("global."))
+                        root = Debugger.Debug.SessionData.inst().GlobalData;
+                    else
+                        root = Debugger.Debug.SessionData.inst().LocalData;
+
+                    JWrapper end = root.ResolveDotPath(Variable.Replace("this.","").Replace("global.","").Split('.'));
+                    if (end is JLeaf)
+                    {
+                        string tildePath = end.GetTildePath();
+                        Json.JWrapper topLevel = end.GetTopMost();
+                        ((JLeaf)end).Value = value;
+                        if (topLevel.Name.Equals("This"))
+                        {
+                            // The userdata int is stored as "Depth" but need the index here
+                            int val = Debug.SessionData.inst().CallStack.Count - 1;
+                            tildePath = String.Format("{0}~{1}", val - ((int)topLevel.UserData), tildePath);
+                            Debugger.Net.DebugClient.inst().SetThisValue(tildePath, value);
+                        }
+                        else if (topLevel.Name.Equals("Globals"))
+                        {
+                            Debugger.Net.DebugClient.inst().SetGlobalValue(tildePath, value);
+                        }
+                        else
+                            Debugger.Net.DebugClient.inst().SetStackValue(tildePath, value);
+                    }
+                    
+                }
                 OnPropertyChanged("Value"); 
             } 
         }

@@ -155,7 +155,8 @@ namespace Debugger.IDE.Intellisense.Sources
         {
             MainWindow.inst().Dispatcher.Invoke(delegate()
             {
-                IDEProject.inst().LocalTypes = documentGlobals_ = AngelscriptParser.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
+                Parsers.AngelscriptParser asp = new Parsers.AngelscriptParser();
+                IDEProject.inst().LocalTypes = documentGlobals_ = asp.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
             });
         }
     }

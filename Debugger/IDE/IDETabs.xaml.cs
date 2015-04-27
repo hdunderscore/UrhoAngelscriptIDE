@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,9 +47,17 @@ namespace Debugger.IDE {
             if (Intellisense.Sources.SourceBuilder.HandlesExtension(System.IO.Path.GetExtension(aFile.Path)))
             {
                 IDEEditor ret = OpenFile(aFile);
-                ret.Editor.TextArea.Caret.Line = aLine;
-                ret.Editor.ScrollToLine(aLine);
                 ret.InvalidateArrange();
+                new Thread(delegate()
+                {
+                    Thread.Sleep(10);
+                    MainWindow.inst().Dispatcher.Invoke(delegate()
+                    {
+                        ret.Editor.TextArea.Caret.Line = aLine;
+                        ret.Editor.ScrollToLine(aLine);
+                        ret.InvalidateArrange();
+                    });
+                }).Start();
                 return ret;
             }
             return null;

@@ -32,7 +32,7 @@ namespace Debugger.IDE.Activity {
             }
             Thread thread = new Thread(delegate() {
                 Globals globs = new Globals(true);
-                ASParser parser = new ASParser();
+                DumpParser parser = new DumpParser();
                 try
                 {
                     StringReader rdr = new StringReader(File.ReadAllText(file));
