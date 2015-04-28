@@ -1,0 +1,45 @@
+<file name="Urho3D Sample" ext=".as"><![CDATA[
+
+#include #include "Scripts/Utilities/Sample.as"
+
+void Start()
+{
+    //INSERT CODE FOR LAUNCHING HERE
+    // Execute the common startup for samples
+    SampleStart();
+
+    CreateScene();
+    
+    SetupViewport();
+    
+    // Finally, hook-up this HelloWorld instance to handle update events
+    SubscribeToEvents();
+}
+
+void SubscribeToEvents()
+{
+    //insert global event subscriptions here
+
+    // Subscribe HandleUpdate() function for processing update events
+    SubscribeToEvent("Update", "HandleUpdate");
+}
+
+void HandleUpdate(StringHash eventType, VariantMap& eventData)
+{
+    //TODO insert you update handling code here
+}
+
+void CreateScene()
+{
+    //TODO insert your scene creation or loading code here
+}
+
+void SetupViewport()
+{
+    // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen. We need to define the scene and the camera
+    // at minimum. Additionally we could configure the viewport screen size and the rendering path (eg. forward / deferred) to
+    // use, but now we just use full screen and default render path configured in the engine command line options
+    Viewport@ viewport = Viewport(scene_, cameraNode.GetComponent("Camera"));
+    renderer.viewports[0] = viewport;
+}
+]]></file>

@@ -1,0 +1,7 @@
+<file name="Urho3D ScriptObject" ext=".as">
+<![CDATA[ 
+class {FILENAME} : ScriptObject
+{
+}
+]]>
+</file>
