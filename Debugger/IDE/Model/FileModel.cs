@@ -84,14 +84,20 @@ namespace Debugger.IDE {
                 if (img == null)
                 {
                     string imgFile = "";
-                    string extension = System.IO.Path.GetExtension(Path);
-                    if (extension.Contains("txt"))
+                    string extension = System.IO.Path.GetExtension(Path).ToLowerInvariant();
+                    if (extension.Equals(".txt"))
                         imgFile = "text.png";
-                    else if (extension.Contains("as"))
+                    else if (extension.Equals(".as"))
+                        imgFile = "angelscript.png";
+                    else if (extension.Equals(".lua"))
                         imgFile = "codefile.png";
-                    else if (extension.Contains("xml"))
+                    else if (extension.Equals(".glsl"))
+                        imgFile = "glsl.png";
+                    else if (extension.Equals(".hlsl"))
+                        imgFile = "hlsl.png";
+                    else if (extension.Equals(".xml"))
                         imgFile = "xmlfile.png";
-                    else if (extension.Contains("png") || extension.Contains("bmp") || extension.Contains("tga") || extension.Contains("jpg"))
+                    else if (extension.Equals(".png") || extension.Equals(".bmp") || extension.Equals(".tga") || extension.Equals(".jpg"))
                         imgFile = "image.png";
                     else
                         imgFile = "textfile.png"; //generic file?

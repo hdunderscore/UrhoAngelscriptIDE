@@ -1,0 +1,22 @@
+﻿<mui:ModernDialog x:Class="Debugger.IDE.Dlg.NewFileDlg"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:mui="http://firstfloorsoftware.com/ModernUI"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Create File" Height="300" Width="300">
+    <DockPanel>
+        <Grid DockPanel.Dock="Bottom">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Label Name="lblFileName" Content="Filename:" VerticalAlignment="Center"/>
+                <TextBox Name="txtFileName" MinWidth="240" MaxWidth="240"/>
+            </StackPanel>
+        </Grid>
+        <Grid>
+            <DataGrid Name="dgFileTypes" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" MaxHeight="480">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding FileType}" Header="File" MinWidth="160" IsReadOnly="True"/>
+                    <DataGridTextColumn Binding="{Binding Ext}" Header="Ext" IsReadOnly="True"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </DockPanel>
+</mui:ModernDialog>

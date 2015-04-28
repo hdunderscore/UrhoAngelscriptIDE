@@ -176,7 +176,8 @@ namespace Debugger.IDE.Intellisense.Parsers
 
                         // Globals can't be private/protected
                         int constIdx = Array.IndexOf(parts, "const");
-                        int termIdx = constIdx + 1;
+                        int uniformIdx = Array.IndexOf(parts, "uniform");
+                        int termIdx = Math.Max(constIdx, uniformIdx) + 1;
 
                         if (parts[termIdx].Contains('<'))
                         {
@@ -191,6 +192,8 @@ namespace Debugger.IDE.Intellisense.Parsers
                         else
                         {
                             string pname = parts[termIdx].EndsWith("@") ? parts[termIdx].Substring(0, parts[termIdx].Length - 1) : parts[termIdx]; //handle
+                            if (pname.Length == 0)
+                                continue;
                             TypeInfo pType = null;
                             if (globals.ContainsTypeInfo(pname))
                                 pType = globals.GetTypeInfo(pname);

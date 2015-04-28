@@ -52,6 +52,9 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>asdevelopicon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="ICSharpCode.AvalonEdit">
       <HintPath>..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
@@ -131,6 +134,9 @@
     </Compile>
     <Compile Include="IDE\Dlg\CompSuccessDlg.xaml.cs">
       <DependentUpon>CompSuccessDlg.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="IDE\Dlg\NewFileDlg.xaml.cs">
+      <DependentUpon>NewFileDlg.xaml</DependentUpon>
     </Compile>
     <Compile Include="IDE\ErrorLineHighlighter.cs" />
     <Compile Include="IDE\Intellisense\Parsers\AngelscriptParser.cs" />
@@ -258,6 +264,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="IDE\Dlg\CompSuccessDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="IDE\Dlg\NewFileDlg.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -525,6 +535,14 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="asdevelopicon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\angelscript.png" />
+    <Resource Include="Images\glsl.png" />
+    <Resource Include="Images\hlsl.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

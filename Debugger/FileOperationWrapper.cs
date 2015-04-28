@@ -68,7 +68,7 @@ namespace Debugger {
         /// <summary>
         /// SHFILEOPSTRUCT for SHFileOperation from COM
         /// </summary>
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 1)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
         private struct SHFILEOPSTRUCT {
 
             public IntPtr hwnd;

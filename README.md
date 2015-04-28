@@ -80,6 +80,22 @@ Snippet XML example:
 
 "Options" are presented as checkboxes, and "inputs" as text fields.
 
+### FileSpecs
+
+Template XML files stored in the "filespecs" folder in the application root are used for creating new files. The format consists of a display name "name" attribute and an ext attribute that determines the extension. When creating a new file if the user specifies an extension it will be stripped off and replaced with the extension specified in the XML.
+
+Text in the "file" tag will have all instances of "{FILENAME}" replaced with the name of the file (without extension).
+
+FileSpec XML Example:
+
+    <file name="Urho3D ScriptObject" ext=".as">
+    <![CDATA[ 
+    class {FILENAME} : ScriptObject
+    {
+    }
+    ]]>
+    </file>
+
 ### Console Log
 
 Contains verbatim output from the last compilation action.

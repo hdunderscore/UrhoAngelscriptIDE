@@ -162,18 +162,17 @@ namespace Debugger.IDE {
             }
         }
 
-        void onNewFile(object sender, EventArgs e) {
+        void onNewFile(object sender, EventArgs e)
+        {
             MenuItem item = sender as MenuItem;
             ContextMenu menu = item.CommandParameter as ContextMenu;
             FileBaseItem target = (menu.PlacementTarget as StackPanel).Tag as FileBaseItem;
 
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.InitialDirectory = target.Path;
-            dlg.DefaultExt = "as";
-            dlg.Filter = "Script (*.as)|*.as|Material (*.xml)|*.xml";
-            if (dlg.ShowDialog() == true) {
-                File.WriteAllText(dlg.FileName, "");
-                ideTabs.OpenFile(new FileBaseItem { Path = dlg.FileName, Name = dlg.FileName });
+            {
+                Dlg.NewFileDlg d = new Dlg.NewFileDlg(target.Path);
+                bool? result = d.ShowDialog();
+                if (result.HasValue && result.Value)
+                    ideTabs.OpenFile(new FileBaseItem { Path = d.Path, Name = d.Path });
             }
         }
 

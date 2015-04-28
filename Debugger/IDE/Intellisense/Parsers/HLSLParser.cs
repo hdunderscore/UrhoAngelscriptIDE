@@ -33,6 +33,23 @@ namespace Debugger.IDE.Intellisense.Parsers
             return ret;
         }
 
+        public override bool ResemblesFunction(string line)
+        {
+            int colonPos = line.IndexOf(':');
+            if (colonPos == -1)
+                colonPos = int.MaxValue;
+
+            int equalsPos = line.IndexOf('=');
+            if (equalsPos == -1) // Scale it out to max, this is necessary so the comparison of default params vs RHS assignment works
+                equalsPos = int.MaxValue;
+
+            int openPos = line.IndexOf('(');
+
+            if (line.Contains("(") && openPos < equalsPos && openPos < colonPos) // Must be a global/namespace function
+                return true;
+            return false;
+        }
+
         public override bool ResemblesClass(string line)
         {
             string[] tokens = line.Split(BREAKCHARS);

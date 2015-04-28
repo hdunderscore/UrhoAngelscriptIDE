@@ -1,48 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="9574390a-fe3c-4468-b99c-ecbd588b99fe" Name="asDevelop" Language="1033" Version="1.0.0.0" Manufacturer="JSandusky" UpgradeCode="cb44d690-5379-4e2e-b2f7-33941e5249ee">
+	<Product Id="9574390a-fe3c-4468-b99c-ecbd588b99fe" Name="asDevelop" Language="1033" Version="0.5.0.0" Manufacturer="JSandusky" UpgradeCode="cb44d690-5379-4e2e-b2f7-33941e5249ee">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
 		<MediaTemplate EmbedCab="yes" />
 
-		<Feature Id="ProductFeature" Title="asDevelop" Level="1">
+		<Feature Id="ProductFeature" Title="asDevelop" Level="1" Description="Main asDevelop application and required tools" >
 			<ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="StartMenuShortcuts" />
 		</Feature>
 
-        <Feature Id="ToolsFeature" Title="asDevelop Tools" Level="1">
-            <ComponentGroupRef Id="ToolsComponents" />
-        </Feature>
+    <Feature Id="CommonPlugins" Title="Standard Plugins" Level="1" Description="Plugins for search, media viewing, and CSV/XML editing">
+      <ComponentGroupRef Id="CommonFiles"/>
+    </Feature>
+
+    <Feature Id="UrhoPlugins" Title="Urho3D Tools" Level="1" Description="Compiler, file templates, and documentation plugins for use with Urho3D">
+      <ComponentGroupRef Id="UrhoPlugins"/>
+    </Feature>
+
+    <Icon Id="asDevelop.exe" SourceFile="../Debugger/bin/Release/asDevelop.exe" />
 	</Product>
 
 	<Fragment>
 		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFilesFolder">
-                <Directory Id="INSTALLFOLDER" Name="asDevelop">
+			  <Directory Id="ProgramFilesFolder">
+              <Directory Id="INSTALLFOLDER" Name="asDevelop">
                     <Directory Id="BINFOLDER" Name="bin" />
                     <Directory Id="PLUGINFOLDER" Name="plugins" />
                     <Directory Id="SNIPPETFOLDER" Name="snippets" />
-                </Directory>
+                    <Directory Id="FILESPECFOLDER" Name="filespecs" />
+              </Directory>
+        </Directory>
+        <Directory Id="ProgramMenuFolder">
+            <Directory Id="ProgramMenuDir" Name="asDevelop">
+              <Component Id="StartMenuShortcuts" Guid="3613A011-25C0-4F73-8CD8-A8F9C6457229">
+                <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+                <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Type="string" Value="" />
+              </Component>
             </Directory>
+        </Directory>
 		</Directory>
+
+    <UIRef Id="UserInterface"/>
 	</Fragment>
 
 	<Fragment>
+    <!-- Main Application -->
 		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-            <Component Id="APP" Guid="ea18b227-517c-427b-aee4-74a5c51e9278">
-                <File Id="APPEXE" Source="../Debugger/Bin/Release/asDevelop.exe" Checksum="yes" KeyPath="yes"/>
-                <File Id="PLUGINLIB" Source="../Debugger/Bin/Release/PluginLib.dll" Checksum="yes" />
-                <File Id="MUI" Source="../Debugger/Bin/Release/FirstFloor.ModernUI.dll" Checksum="yes" />
-                <File Id="AVALON" Source="../Debugger/Bin/Release/ICSharpCode.AvalonEdit.dll" Checksum="yes" />
-                <File Id="JSON" Source="../Debugger/Bin/Release/Newtonsoft.Json.dll" Checksum="yes" />
-                <File Id="WS" Source="../Debugger/Bin/Release/WebSocket4Net.dll" Checksum="yes" />
-            </Component>
+      <Component Id="APP" Guid="ea18b227-517c-427b-aee4-74a5c51e9278">
+        <!-- Core Application -->
+        <File Id="APPEXE" Source="../Debugger/Bin/Release/asDevelop.exe" Checksum="yes" KeyPath="yes">
+          <Shortcut Id="ExeShortcut" Directory="ProgramMenuDir" Name="asDevelop" Advertise="yes" Icon="asDevelop.exe" IconIndex="0" WorkingDirectory="INSTALLFOLDER" />
+        </File>
+        <File Id="PLUGINLIB" Source="../Debugger/Bin/Release/PluginLib.dll" Checksum="yes" />
+        
+        <!-- Dependencies -->
+        <File Id="MUI" Source="../Debugger/Bin/Release/FirstFloor.ModernUI.dll" Checksum="yes" />
+        <File Id="AVALON" Source="../Debugger/Bin/Release/ICSharpCode.AvalonEdit.dll" Checksum="yes" />
+        <File Id="JSON" Source="../Debugger/Bin/Release/Newtonsoft.Json.dll" Checksum="yes" />
+        <File Id="WS" Source="../Debugger/Bin/Release/WebSocket4Net.dll" Checksum="yes" />
+              
+        <!-- Default FileSpecs -->
+        <File Id="ASFILE" Source="../Debugger/Bin/Release/filespecs/Angelscript.xml" Checksum="yes" />
+        <File Id="HLSLFILE" Source="../Debugger/Bin/Release/filespecs/HLSL.xml" Checksum="yes" />
+        <File Id="GLSLFILE" Source="../Debugger/Bin/Release/filespecs/GLSL.xml" Checksum="yes" />
+      </Component>
 		</ComponentGroup>
 
-        <ComponentGroup Id="ToolsComponents" Directory="BINFOLDER">
-            <Component Id="TOOLS" Guid="5f3e3f7c-8b1d-4904-8bf1-9067b108ded2">
-                <File Id="COMPILER" Source="../Debugger/Bin/Release/Bin/ScriptCompiler.exe" Checksum="yes" />
-            </Component>
-        </ComponentGroup>
+    <!-- Urho3D Specific -->
+    <ComponentGroup Id="UrhoPlugins" Directory="PLUGINFOLDER">
+      <Component Id="URHOPLUGINS" Guid="6af464df-57a7-4724-99a5-d99ae4e8d89f">
+        <!-- Plugins -->
+        <File Id="URHOCOMPILER" Source="../Debugger/Bin/Release/plugins/UrhoCompilerPlugin.dll" Checksum="yes" />
+        <File Id="URHOINFO" Source="../Debugger/Bin/Release/plugins/UrhoDocsPlugin.dll" Checksum="yes" />
+        
+        <!-- Defaults -->
+        <File Id="DEFAULTDUMP" Source="../Debugger/Bin/Release/Bin/dump.h" Checksum="yes" />
+        <File Id="DEFAULTAPI" Source="../Debugger/Bin/Release/Bin/ScriptAPI.dox" Checksum="yes" />
+        <File Id="COMPILER" Source="../Debugger/Bin/Release/Bin/ScriptCompiler.exe" Checksum="yes" />
+      
+        <!-- FileSpecs -->
+        <File Id="URHOSAMPLEFILE" Source="../Debugger/Bin/Release/filespecs/Urhosample.xml" Checksum="yes" />
+        <File Id="SCRIPTOBJECTFILE" Source="../Debugger/Bin/Release/filespecs/ScriptObject.xml" Checksum="yes" />
+        <File Id="URHOPARTICLEFILE" Source="../Debugger/Bin/Release/filespecs/UrhoParticle.xml" Checksum="yes" />
+        <File Id="URHOMATERIALFILE" Source="../Debugger/Bin/Release/filespecs/UrhoMaterial.xml" Checksum="yes" />
+        <File Id="URHOTECHNIQUEFILE" Source="../Debugger/Bin/Release/filespecs/UrhoTechnique.xml" Checksum="yes" />
+        <File Id="URHORENDERPATHFILE" Source="../Debugger/Bin/Release/filespecs/UrhoRenderpath.xml" Checksum="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Standard Plugins -->
+    <ComponentGroup Id="CommonFiles" Directory="PLUGINFOLDER">
+      <Component Id="COMMONPLUGINS" Guid="e66e1a98-cb4f-4ba7-a9af-7ea8a4319647">
+        <File Id="CSVPLUGIN" Source="../Debugger/Bin/Release/plugins/CSVEditorPlugin.dll" Checksum="yes"/>
+        <File Id="FILESEARCH" Source="../Debugger/Bin/Release/plugins/FileSearch.dll" Checksum="yes"/>
+        <File Id="XMLPLUGIN" Source="../Debugger/Bin/Release/plugins/XMLEditor.dll" Checksum="yes"/>
+        <File Id="MEDIAVIEWER" Source="../Debugger/Bin/Release/plugins/MediaViewer.dll" Checksum="yes"/>
+      </Component>
+    </ComponentGroup>
 	</Fragment>
 </Wix>

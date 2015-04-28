@@ -22,6 +22,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Product.wxs" />
+    <Compile Include="UserInterface.wxs" />
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
+    </WixExtension>
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
   <!--

@@ -53,7 +53,7 @@ namespace Debugger.IDE.Intellisense.Parsers
                             string fileName = s.Replace("\"", "");
                             foreach (string d in dirs)
                             {
-                                string pathCombo = System.IO.Path.Combine(d, fileName);
+                                string pathCombo = System.IO.Path.Combine(d.Trim(), fileName);
                                 if (System.IO.File.Exists(pathCombo))
                                 {
                                     if (!existingPaths.Contains(pathCombo))
@@ -63,8 +63,9 @@ namespace Debugger.IDE.Intellisense.Parsers
                                         existingPaths.Add(pathCombo);
                                         break;
                                     }
-                                    else
-                                        throw new Exception(String.Format("Circular include referenced {0}", pathCombo));
+                                    //\todo Option for error on circular include?
+                                    //else
+                                    //    throw new Exception(String.Format("Circular include referenced {0}", pathCombo));
                                 }
                             }
                             break;
