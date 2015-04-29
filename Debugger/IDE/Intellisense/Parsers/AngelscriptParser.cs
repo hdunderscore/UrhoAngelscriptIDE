@@ -166,7 +166,8 @@ namespace Debugger.IDE.Intellisense.Parsers
                         try
                         {
                             FunctionInfo fi = _parseFunction(rdr, line, globals, lineNumber, defName);
-                            globals.AddFunction(fi);
+                            if (fi != null)
+                                globals.AddFunction(fi);
                         }
                         catch (Exception ex) { }
                     }
@@ -232,7 +233,9 @@ namespace Debugger.IDE.Intellisense.Parsers
                     continue;
                 if (ResemblesFunction(l))
                 {
-                    targetType.Functions.Add(_parseFunction(rdr, l, targetGlobals, lineNumber, defName));
+                    FunctionInfo fi = _parseFunction(rdr, l, targetGlobals, lineNumber, defName);
+                    if (fi != null)
+                        targetType.Functions.Add(fi);
                 }
                 else if (ResemblesProperty(l, targetGlobals))
                 {
@@ -292,7 +295,7 @@ namespace Debugger.IDE.Intellisense.Parsers
                 ExtractLineInfo(ref line, out defName, out lineNumber);
 
                 ++currentLine;
-                if (line.Equals("};")) {
+                if (line.StartsWith("}")) {
                     EnumInfo ret = new EnumInfo { Name = enumName };
                     ret.Values.AddRange(enumValues);
                     globals.AddTypeInfo(enumName, ret);
@@ -328,9 +331,11 @@ namespace Debugger.IDE.Intellisense.Parsers
             int sharedIdx = Array.IndexOf(nameParts, "shared");
             int importIdx = Array.IndexOf(nameParts, "import");
             int funcdefIdx = Array.IndexOf(nameParts, "funcdef");
+            int privateIdx = Array.IndexOf(nameParts, "private");
+            int protectedIdx = Array.IndexOf(nameParts, "protected");
 
             // Return type is at this index
-            int startIdx = Math.Max(sharedIdx, Math.Max(importIdx, funcdefIdx)) + 1;
+            int startIdx = Math.Max(sharedIdx, Math.Max(importIdx, Math.Max(funcdefIdx, Math.Max(privateIdx, protectedIdx)))) + 1;
 
             //TODO: split the name parts
             if (globals.ContainsTypeInfo(nameParts[startIdx]))
@@ -351,12 +356,17 @@ namespace Debugger.IDE.Intellisense.Parsers
             }
             if (funcdefIdx == -1)
             {
+                if (nameParts.Length - 1 < startIdx + 1)
+                    return null;
                 return new FunctionInfo { Name = nameParts[startIdx+1], ReturnType = retType, Inner = paramDecl, 
                     IsImport = importIdx != -1, IsShared = sharedIdx != -1,
-                    SourceLine = lineNumber, SourceFile = defName };
+                    SourceLine = lineNumber, SourceFile = defName, 
+                    IsPrivate = privateIdx != -1, IsProtected = protectedIdx != -1 };
             } 
             else
             {
+                if (nameParts.Length-1 < startIdx+1)
+                    return null;
                 return new FuncDefInfo { Name = nameParts[startIdx + 1], ReturnType = retType, Inner = paramDecl,
                     IsImport = importIdx != -1, IsShared = sharedIdx != -1, 
                     SourceLine = lineNumber, SourceFile = defName };
@@ -385,6 +395,8 @@ namespace Debugger.IDE.Intellisense.Parsers
 
                 int termIdx = Math.Max(constIdx, Math.Max(privateIdx, protectedIdx)) + 1;
 
+                if (tokens.Length < termIdx + 1)
+                    return false;
                 if (globals.ContainsTypeInfo(tokens[termIdx].Replace("@","")))
                 {
                     if (tokens[termIdx+1].EndsWith(";"))

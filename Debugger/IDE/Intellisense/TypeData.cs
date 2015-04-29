@@ -56,7 +56,7 @@ namespace Debugger.IDE.Intellisense
         public string Name { get; set; }
         public Globals Globals { get; set; }
     }
-    
+
     public abstract class BaseTypeInfo
     {
 
@@ -73,6 +73,7 @@ namespace Debugger.IDE.Intellisense
             Functions = new List<FunctionInfo>();
             ReadonlyProperties = new List<string>();
             ProtectedProperties = new List<string>();
+            PrivateProperties = new List<string>();
             IsComplete = true; //default we'll assume complete
             IsPrimitive = false;
             SourceLine = 0;
@@ -145,8 +146,6 @@ namespace Debugger.IDE.Intellisense
                     return "mixin ";
                 if (IsShared)
                     return "shared class ";
-                if (this is EnumInfo)
-                    return "enum ";
                 return "class ";
             }
         }
@@ -187,7 +186,7 @@ namespace Debugger.IDE.Intellisense
                 if (BaseTypes.Count > 0)
                     ret.Add(new TypeList(BaseTypes.ToArray()));
                 foreach (string key in Properties.Keys)
-                    ret.Add(new PropInfo { Name = key, Type = Properties[key], ReadOnly = ReadonlyProperties.Contains(key), Protected = ProtectedProperties.Contains(key), SourceLine = PropertyLines[key], SourceFile = SourceFile });
+                    ret.Add(new PropInfo { Name = key, Type = Properties[key], ReadOnly = PrivateProperties.Contains(key) || ReadonlyProperties.Contains(key), Protected = ProtectedProperties.Contains(key), SourceLine = PropertyLines[key], SourceFile = SourceFile });
                 foreach (FunctionInfo f in Functions)
                     ret.Add(f);
                 return ret;
@@ -210,7 +209,8 @@ namespace Debugger.IDE.Intellisense
 
         public string ImgSource
         {
-            get {
+            get
+            {
                 if (IsMixin)
                     return "/Images/all/mixin.png";
                 else if (IsInterface && IsShared)
@@ -281,7 +281,8 @@ namespace Debugger.IDE.Intellisense
 
         public string ImgSource
         {
-            get {
+            get
+            {
                 if (Name.StartsWith("op"))
                     return "/Images/all/opmethod.png";
                 if (this is FuncDefInfo) //Bad bad bad
@@ -318,9 +319,20 @@ namespace Debugger.IDE.Intellisense
         }
         public List<string> Values { get; private set; }
 
-        string ImgSource
+        public new string Description
         {
-            get {
+            get
+            {
+                if (IsShared)
+                    return "shared enum ";
+                return "enum ";
+            }
+        }
+
+        public new string ImgSource
+        {
+            get
+            {
                 if (IsShared)
                     return "/Images/all/sharedenum.png";
                 return "/Images/all/enum.png";
@@ -387,7 +399,7 @@ namespace Debugger.IDE.Intellisense
         Dictionary<string, string> PropertyFiles { get; set; }
 
         public List<string> ReadonlyProperties { get; private set; }
-        
+
         // Used For UI
         IEnumerable<string> ClassKeys { get { return Classes.Keys; } }
         public List<TypeInfo> TypeInfo { get { return new List<TypeInfo>(Classes.Values); } }

@@ -47,8 +47,8 @@
 
 	<Fragment>
     <!-- Main Application -->
-		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <Component Id="APP" Guid="ea18b227-517c-427b-aee4-74a5c51e9278">
+		<ComponentGroup Id="ProductComponents">
+      <Component Id="APP" Guid="ea18b227-517c-427b-aee4-74a5c51e9278" Directory="INSTALLFOLDER">
         <!-- Core Application -->
         <File Id="APPEXE" Source="../Debugger/Bin/Release/asDevelop.exe" Checksum="yes" KeyPath="yes">
           <Shortcut Id="ExeShortcut" Directory="ProgramMenuDir" Name="asDevelop" Advertise="yes" Icon="asDevelop.exe" IconIndex="0" WorkingDirectory="INSTALLFOLDER" />
@@ -60,8 +60,10 @@
         <File Id="AVALON" Source="../Debugger/Bin/Release/ICSharpCode.AvalonEdit.dll" Checksum="yes" />
         <File Id="JSON" Source="../Debugger/Bin/Release/Newtonsoft.Json.dll" Checksum="yes" />
         <File Id="WS" Source="../Debugger/Bin/Release/WebSocket4Net.dll" Checksum="yes" />
-              
-        <!-- Default FileSpecs -->
+      </Component>
+
+      <!-- Default FileSpecs -->
+      <Component Id="BUILTINFILES" Directory="FILESPECFOLDER" Guid="98845b58-32f3-436c-9e52-32b487567905">
         <File Id="ASFILE" Source="../Debugger/Bin/Release/filespecs/Angelscript.xml" Checksum="yes" />
         <File Id="HLSLFILE" Source="../Debugger/Bin/Release/filespecs/HLSL.xml" Checksum="yes" />
         <File Id="GLSLFILE" Source="../Debugger/Bin/Release/filespecs/GLSL.xml" Checksum="yes" />
@@ -69,18 +71,22 @@
 		</ComponentGroup>
 
     <!-- Urho3D Specific -->
-    <ComponentGroup Id="UrhoPlugins" Directory="PLUGINFOLDER">
-      <Component Id="URHOPLUGINS" Guid="6af464df-57a7-4724-99a5-d99ae4e8d89f">
-        <!-- Plugins -->
+    <ComponentGroup Id="UrhoPlugins">
+      <!-- Plugins -->
+      <Component Id="URHOPLUGINS" Guid="6af464df-57a7-4724-99a5-d99ae4e8d89f" Directory="PLUGINFOLDER">
         <File Id="URHOCOMPILER" Source="../Debugger/Bin/Release/plugins/UrhoCompilerPlugin.dll" Checksum="yes" />
         <File Id="URHOINFO" Source="../Debugger/Bin/Release/plugins/UrhoDocsPlugin.dll" Checksum="yes" />
-        
+      </Component>
+      
         <!-- Defaults -->
+      <Component Id="URHOBIN" Directory="BINFOLDER" Guid="0afc1ea3-ea68-47b7-806e-a5c40db13545">
         <File Id="DEFAULTDUMP" Source="../Debugger/Bin/Release/Bin/dump.h" Checksum="yes" />
         <File Id="DEFAULTAPI" Source="../Debugger/Bin/Release/Bin/ScriptAPI.dox" Checksum="yes" />
         <File Id="COMPILER" Source="../Debugger/Bin/Release/Bin/ScriptCompiler.exe" Checksum="yes" />
-      
-        <!-- FileSpecs -->
+      </Component>
+
+      <!-- FileSpecs -->
+      <Component Id="URHOFILES" Guid="503d55b4-be30-4b28-914c-56ebe7610226" Directory="FILESPECFOLDER">
         <File Id="URHOSAMPLEFILE" Source="../Debugger/Bin/Release/filespecs/Urhosample.xml" Checksum="yes" />
         <File Id="SCRIPTOBJECTFILE" Source="../Debugger/Bin/Release/filespecs/ScriptObject.xml" Checksum="yes" />
         <File Id="URHOPARTICLEFILE" Source="../Debugger/Bin/Release/filespecs/UrhoParticle.xml" Checksum="yes" />

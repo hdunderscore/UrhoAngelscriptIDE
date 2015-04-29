@@ -63,6 +63,8 @@ namespace Debugger.IDE.Intellisense.Parsers
                                         existingPaths.Add(pathCombo);
                                         break;
                                     }
+                                    else
+                                        break;
                                     //\todo Option for error on circular include?
                                     //else
                                     //    throw new Exception(String.Format("Circular include referenced {0}", pathCombo));
