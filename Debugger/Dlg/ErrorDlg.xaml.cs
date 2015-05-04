@@ -21,7 +21,6 @@ namespace Debugger.Dlg {
         public static void Show(string aText, string aURL = "") {
             //MainWindow.Blur();
             ErrorDlg dlg = new ErrorDlg(aText, aURL);
-            //dlg.MinWidth = MainWindow.GetSize().Width;
             dlg.ShowDialog();
             //MainWindow.UnBlur();
         }
@@ -31,7 +30,6 @@ namespace Debugger.Dlg {
 
             errorText.TextWrapping = TextWrapping.Wrap;
             errorText.Text = aErrorText;
-            rptServerURL.Text = aReportTo;
 
             Button rptButton = new Button { Content = "Report" };
             rptButton.Click += onReportClick;
@@ -47,6 +45,7 @@ namespace Debugger.Dlg {
         }
 
         void onReportClick(object sender, EventArgs e) {
+            Debugger.Net.Emailer.MailTo(errorText.Text);
             Close();
         }
 

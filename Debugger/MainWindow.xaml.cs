@@ -33,6 +33,12 @@ namespace Debugger {
             inst_ = this;
             errHandler = new ErrorHandler();
             this.ContentLoader = new ContentLoader();
+            
+            // Release builds will attempt to swallow errors as much as possible with the opportunity to report the error
+            // Debug builds will not
+            #if !debug
+                AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            #endif
 
             TextBlock tb = new TextBlock();
             tb.Opacity = 0.025;
@@ -57,6 +63,13 @@ namespace Debugger {
             errTimer.Interval = 200;
             errTimer.Elapsed += errTimer_Elapsed;
             errTimer.Start();
+        }
+
+        void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception ex = e.ExceptionObject as Exception;
+            if (ex != null)
+                ErrorHandler.inst().Error(ex);
         }
 
         void errTimer_Elapsed(object sender, ElapsedEventArgs e) {

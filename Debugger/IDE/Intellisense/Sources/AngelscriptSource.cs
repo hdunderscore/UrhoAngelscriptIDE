@@ -5,6 +5,7 @@ using ICSharpCode.AvalonEdit.Document;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -64,6 +65,17 @@ namespace Debugger.IDE.Intellisense.Sources
                     if (dlg.ShowDialog() == true)
                     {
                         editor.Document.BeginUpdate();
+                        foreach (string incDir in IDEProject.inst().Settings.GetIncludeDirectories())
+                        {
+                            if (AngelscriptSource.isSubDir(incDir, dlg.FileName))
+                            {
+                                // Everything came from System.IO.Path, should be normal form
+                                string strippedString = dlg.FileName.Replace(incDir + "\\", ""); //AngelscriptSource.MakeRelativePath(incDir, dlg.FileName);
+                                editor.Document.Insert(editor.CaretOffset, string.Format("#include \"{0}\"", strippedString).Replace("\\","/"));
+                                editor.Document.EndUpdate();
+                                return;
+                            }
+                        }
                         editor.Document.Insert(editor.CaretOffset, string.Format("#include \"{0}\"", dlg.FileName));
                         editor.Document.EndUpdate();
                     }
@@ -158,6 +170,44 @@ namespace Debugger.IDE.Intellisense.Sources
                 Parsers.AngelscriptParser asp = new Parsers.AngelscriptParser();
                 IDEProject.inst().LocalTypes = documentGlobals_ = asp.Parse(item.Path, System.IO.File.ReadAllText(item.Path), IDEProject.inst().Settings.GetIncludeDirectories());
             });
+        }
+
+        // http://stackoverflow.com/questions/26102809/c-sharp-check-if-a-file-path-contains-a-specific-directory
+        private static bool isSubDir(string parentPath, string childPath)
+        {
+            var parentUri = new Uri(parentPath);
+            var childUri = new DirectoryInfo(childPath).Parent;
+            while(childUri != null)
+            {
+                if(new Uri(childUri.FullName) == parentUri)
+                {
+                    return true ;
+                }
+                childUri = childUri.Parent;
+            }
+            return false;
+        }
+
+        // http://stackoverflow.com/questions/275689/how-to-get-relative-path-from-absolute-path
+        private static String MakeRelativePath(String fromPath, String toPath)
+        {
+            if (String.IsNullOrEmpty(fromPath)) throw new ArgumentNullException("fromPath");
+            if (String.IsNullOrEmpty(toPath)) throw new ArgumentNullException("toPath");
+
+            Uri fromUri = new Uri(fromPath);
+            Uri toUri = new Uri(toPath);
+
+            if (fromUri.Scheme != toUri.Scheme) { return toPath; } // path can't be made relative.
+
+            Uri relativeUri = fromUri.MakeRelativeUri(toUri);
+            String relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+            if (toUri.Scheme.ToUpperInvariant() == "FILE")
+            {
+                relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            }
+
+            return relativePath;
         }
     }
 }

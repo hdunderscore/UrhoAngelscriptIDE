@@ -24,6 +24,8 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using System.Xml;
 using System.Reflection;
 using System.Collections.ObjectModel;
+using ICSharpCode.AvalonEdit.Folding;
+using System.Threading;
 
 namespace Debugger.IDE {
     /// <summary>
@@ -36,6 +38,8 @@ namespace Debugger.IDE {
         FileBaseItem item;
         DepthScanner scanner;
         IntellisenseSource intelSource;
+        FoldingManager foldingManager;
+        Debugger.Editor.BraceFoldingStrategy codeFolding;
 
         public IDEEditor(FileBaseItem aItem) {
             InitializeComponent();
@@ -48,6 +52,7 @@ namespace Debugger.IDE {
             editor.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDCDCCC"));
             editor.TextArea.TextView.BackgroundRenderers.Add(new LineHighlighter());
             editor.TextArea.TextView.BackgroundRenderers.Add(new ErrorLineHighlighter(aItem));
+            editor.TextArea.IndentationStrategy = new ICSharpCode.AvalonEdit.Indentation.CSharp.CSharpIndentationStrategy();
             Debugger.Editor.SearchPanel.Install(editor);
             editor.TextChanged += editor_TextChanged;
             scanner = new DepthScanner();
@@ -55,6 +60,10 @@ namespace Debugger.IDE {
             editor.MouseHover += editor_MouseHover;
             editor.TextArea.MouseWheel += editor_MouseWheel;
             editor.KeyUp += editor_KeyUp;
+            editor.MouseUp += editor_MouseUp;
+            codeFolding = new BraceFoldingStrategy();
+            foldingManager = FoldingManager.Install(editor.TextArea);
+            UpdateFoldings();
 
             intelSource = Intellisense.Sources.SourceBuilder.GetSourceForExtension(System.IO.Path.GetExtension(item.Path));
             editor.ContextMenu = new ContextMenu();
@@ -132,6 +141,12 @@ namespace Debugger.IDE {
             });
         }
 
+        void editor_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Middle)
+                e.Handled = true;
+        }
+
         void editor_MouseHover(object sender, MouseEventArgs e) {
             if (intelSource != null)
                 intelSource.EditorMouseHover(editor, scanner, e);
@@ -191,12 +206,18 @@ namespace Debugger.IDE {
         }
 
         void editor_TextChanged(object sender, EventArgs e) {
-            MainWindow.inst().Dispatcher.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate() {
-                changeChecker.Recheck();
+            string text = editor.Text;
+            new Thread(delegate()
+            {
                 DepthScanner newScan = new DepthScanner();
-                newScan.Process(editor.Text);
-                scanner = newScan;
-            });
+                newScan.Process(text);
+                MainWindow.inst().Dispatcher.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+                {
+                    changeChecker.Recheck();
+                    scanner = newScan;
+                });
+            }).Start();
+            UpdateFoldings();
         }
 
         public TextEditor Editor { get { return editor; } }
@@ -229,6 +250,12 @@ namespace Debugger.IDE {
 
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = true;
+        }
+
+        private void UpdateFoldings()
+        {
+            if (codeFolding != null)
+                codeFolding.UpdateFoldings(foldingManager, editor.Document);
         }
     }
 }

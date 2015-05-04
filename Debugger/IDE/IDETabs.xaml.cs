@@ -26,6 +26,27 @@ namespace Debugger.IDE {
             tabs.SelectionChanged += tabs_SelectionChanged;
         }
 
+        public void SaveAll()
+        {
+            foreach (TabItem o in tabs.Items)
+            {
+                // Easy case
+                IDEEditor editor = o.Content as IDEEditor;
+                if (editor != null)
+                {
+                    editor.Save();
+                }
+                else // Plugin editors
+                {
+                    if (o.Content is Control && ((Control)o.Content).Tag is PluginLib.IExternalControlData)
+                    {
+                        PluginLib.IExternalControlData data = ((Control)o.Content).Tag as PluginLib.IExternalControlData;
+                        data.SaveData();
+                    }
+                }
+            }
+        }
+
         void tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count > 0)

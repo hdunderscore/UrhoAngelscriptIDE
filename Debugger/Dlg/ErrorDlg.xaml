@@ -10,14 +10,6 @@
         <SolidColorBrush Color="Red" x:Key="WindowBorderBackground" />
     </mui:ModernDialog.Resources>
     <Grid>
-        <DockPanel Margin="10,10,9.667,10">
-            <StackPanel DockPanel.Dock="Bottom">
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Report to URL" Margin="10.10"/>
-                    <TextBox Name="rptServerURL" Width="400"/>
-                </StackPanel>
-            </StackPanel>
-            <TextBox Name="errorText" Margin="10,10"/>
-        </DockPanel>
+        <TextBox Name="errorText" Margin="10,10"/>
     </Grid>
 </mui:ModernDialog>

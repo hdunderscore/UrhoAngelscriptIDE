@@ -118,6 +118,7 @@
       <DependentUpon>DocumentDlg.xaml</DependentUpon>
     </Compile>
     <Compile Include="DrawingUtility.cs" />
+    <Compile Include="Editor\BraceFoldingStrategy.cs" />
     <Compile Include="Editor\BraceHighlighter.cs" />
     <Compile Include="Editor\BreakpointMargin.cs" />
     <Compile Include="Editor\EditorTabs.xaml.cs">
@@ -196,6 +197,7 @@
     <Compile Include="Dlg\NewProjectDlg.xaml.cs">
       <DependentUpon>NewProjectDlg.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Net\Emailer.cs" />
     <Compile Include="PluginManager.cs" />
     <Compile Include="Dlg\RenameDlg.xaml.cs">
       <DependentUpon>RenameDlg.xaml</DependentUpon>

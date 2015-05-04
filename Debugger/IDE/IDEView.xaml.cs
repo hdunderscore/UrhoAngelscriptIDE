@@ -330,7 +330,7 @@ namespace Debugger.IDE {
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e) {
-
+            ideTabs.SaveAll();
         }
 
         private void btnRun_Click(object sender, RoutedEventArgs e) {

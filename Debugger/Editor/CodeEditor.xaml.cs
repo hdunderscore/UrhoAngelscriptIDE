@@ -3,10 +3,12 @@ using FirstFloor.ModernUI.Presentation;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Folding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
@@ -26,9 +28,11 @@ namespace Debugger.Editor {
     public partial class CodeEditor : UserControl {
         FileData data;
         BreakpointMargin bpMargin;
-        Timer t;
+        System.Timers.Timer t;
         IDE.Intellisense.IntellisenseSource intelSource;
         IDE.Intellisense.DepthScanner depthScanner;
+        FoldingManager foldingManager;
+        BraceFoldingStrategy codeFolding;
 
         public CodeEditor(FileData aModelData) {
             InitializeComponent();
@@ -44,6 +48,9 @@ namespace Debugger.Editor {
             editor.TextArea.LeftMargins.Insert(0, bpMargin = new BreakpointMargin(aModelData));
             SearchPanel panel = SearchPanel.Install(editor.TextArea);
             aModelData.PropertyChanged += aModelData_PropertyChanged;
+            foldingManager = FoldingManager.Install(editor.TextArea);
+            codeFolding = new BraceFoldingStrategy();
+            UpdateFolding();
 
             // If using IDE data then give ourselves an IntellisenseSource
             if (Debug.SessionData.inst().Settings.UseIDEData)
@@ -57,20 +64,25 @@ namespace Debugger.Editor {
             editor.KeyUp += editor_KeyUp;
             editor.TextChanged += editor_TextChanged;
 
-            t = new Timer();
-            t.Interval = 250;
+            t = new System.Timers.Timer();
+            t.Interval = 175;
             t.Elapsed += t_Elapsed;
             t.Start();
         }
 
         void editor_TextChanged(object sender, EventArgs e)
         {
-            MainWindow.inst().Dispatcher.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+            string text = editor.Text;
+            new Thread(delegate()
             {
                 IDE.Intellisense.DepthScanner newScan = new IDE.Intellisense.DepthScanner();
-                newScan.Process(editor.Text);
-                depthScanner = newScan;
-            });
+                newScan.Process(text);
+                MainWindow.inst().Dispatcher.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+                {
+                    depthScanner = newScan;
+                });
+            }).Start();
+            UpdateFolding();
         }
 
         void editor_KeyUp(object sender, KeyEventArgs e)
@@ -179,6 +191,13 @@ namespace Debugger.Editor {
                 });
             } else
                 bp.Active = !bp.Active;
+            bpMargin.InvalidateVisual();
+        }
+
+        private void UpdateFolding()
+        {
+            if (codeFolding != null)
+                codeFolding.UpdateFoldings(foldingManager, editor.Document);
             bpMargin.InvalidateVisual();
         }
     }

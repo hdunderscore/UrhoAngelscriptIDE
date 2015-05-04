@@ -39,7 +39,7 @@ namespace Debugger {
         }
 
         public void Error(Exception ex) {
-            messages_.Add(ex.Message);
+            messages_.Add(String.Format("{0}\r\n\r\n{1}", ex.Message, ex.StackTrace));
         }
 
         public void PublishError(Exception ex)
