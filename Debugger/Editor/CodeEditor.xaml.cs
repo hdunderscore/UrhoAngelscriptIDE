@@ -39,6 +39,8 @@ namespace Debugger.Editor {
             aModelData.AttachEditor(editor);
             this.data = aModelData;
             editor.ShowLineNumbers = true;
+            editor.Options.ConvertTabsToSpaces = true;
+            editor.Options.IndentationSize = 4;
             editor.Foreground = new SolidColorBrush(Colors.White);
             editor.SyntaxHighlighting = AvalonExtensions.LoadHighlightingDefinition("Debugger.Resources.Angelscript.xshd");
             editor.Text = data.Code;

@@ -15,6 +15,7 @@ using System.Windows.Input;
 
 namespace Debugger.IDE.Intellisense.Sources
 {
+    [IntelSourceDescriptor(Ext = ".as")]
     public class AngelscriptSource : SourceBase
     {
         Globals documentGlobals_;

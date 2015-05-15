@@ -13,6 +13,7 @@ using System.Windows.Input;
 
 namespace Debugger.IDE.Intellisense.Sources
 {
+    [IntelSourceDescriptor(Ext = ".hlsl")]
     public class HLSLSource : SourceBase
     {
         static Globals HLSLGlobals;

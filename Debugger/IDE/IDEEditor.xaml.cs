@@ -32,9 +32,9 @@ namespace Debugger.IDE {
     /// Interaction logic for IDEEditor.xaml
     /// </summary>
     /// 
-
-
     public partial class IDEEditor : UserControl {
+        static readonly string[] FOLDED_EXTENSIONS = { ".java", ".as", ".cpp", ".c", ".h", ".cs" };
+
         FileBaseItem item;
         DepthScanner scanner;
         IntellisenseSource intelSource;
@@ -48,11 +48,15 @@ namespace Debugger.IDE {
             SetCode(aItem);
             editor.ShowLineNumbers = true;
 
+            editor.Options.ConvertTabsToSpaces = true;
+            editor.Options.IndentationSize = 4;
+
             editor.FontFamily = new FontFamily("Consolas");
             editor.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDCDCCC"));
             editor.TextArea.TextView.BackgroundRenderers.Add(new LineHighlighter());
             editor.TextArea.TextView.BackgroundRenderers.Add(new ErrorLineHighlighter(aItem));
-            editor.TextArea.IndentationStrategy = new ICSharpCode.AvalonEdit.Indentation.CSharp.CSharpIndentationStrategy();
+            // Buggy
+            //editor.TextArea.IndentationStrategy = new ICSharpCode.AvalonEdit.Indentation.CSharp.CSharpIndentationStrategy();
             Debugger.Editor.SearchPanel.Install(editor);
             editor.TextChanged += editor_TextChanged;
             scanner = new DepthScanner();
@@ -62,8 +66,12 @@ namespace Debugger.IDE {
             editor.KeyUp += editor_KeyUp;
             editor.MouseUp += editor_MouseUp;
             codeFolding = new BraceFoldingStrategy();
-            foldingManager = FoldingManager.Install(editor.TextArea);
-            UpdateFoldings();
+
+            if (FOLDED_EXTENSIONS.Contains(System.IO.Path.GetExtension(aItem.Path)))
+            {
+                foldingManager = FoldingManager.Install(editor.TextArea);
+                UpdateFoldings();
+            }
 
             intelSource = Intellisense.Sources.SourceBuilder.GetSourceForExtension(System.IO.Path.GetExtension(item.Path));
             editor.ContextMenu = new ContextMenu();
@@ -173,6 +181,19 @@ namespace Debugger.IDE {
             {
                 intelSource.EditorKeyUp(editor, scanner, e);
             }
+            if (e.Key == Key.W && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
+            {
+                FrameworkElement obj = Parent as FrameworkElement;
+                while (obj != null && !(obj is IDETabs))
+                {
+                    obj = obj.Parent as FrameworkElement;
+                }
+                if (obj is IDETabs)
+                {
+                    IDETabs ideTabs = obj as IDETabs;
+                    ideTabs.onCloseTab(Parent, null);
+                }
+            }
         }
 
         public DataChanged changeChecker { get; set; }
@@ -254,7 +275,7 @@ namespace Debugger.IDE {
 
         private void UpdateFoldings()
         {
-            if (codeFolding != null)
+            if (codeFolding != null && foldingManager != null)
                 codeFolding.UpdateFoldings(foldingManager, editor.Document);
         }
     }

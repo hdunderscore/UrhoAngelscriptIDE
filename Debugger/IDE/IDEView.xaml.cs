@@ -172,7 +172,7 @@ namespace Debugger.IDE {
                 Dlg.NewFileDlg d = new Dlg.NewFileDlg(target.Path);
                 bool? result = d.ShowDialog();
                 if (result.HasValue && result.Value)
-                    ideTabs.OpenFile(new FileBaseItem { Path = d.Path, Name = d.Path });
+                    ideTabs.OpenFile(new FileBaseItem { Path = d.Path, Name = System.IO.Path.GetFileName(d.Path) });
             }
         }
 
@@ -263,13 +263,24 @@ namespace Debugger.IDE {
         private void errorDoubleClick(object sender, MouseEventArgs args) {
             DataGridRow row = sender as DataGridRow;
             PluginLib.CompileError result = row.DataContext as PluginLib.CompileError;
-            IDEEditor editor = ideTabs.OpenFile(new FileLeafItem {
-                Path = result.File,
-                Name = result.File.Replace(IDEProject.inst().ProjectDir, "")
-            });
-            if (result.Line != -1) {
-                editor.Editor.TextArea.Caret.Line = result.Line;
-                editor.Editor.ScrollToLine(result.Line);
+            foreach (string str in IDEProject.inst().GetIncludeDirs())
+            {
+                string path = System.IO.Path.Combine(IDEProject.inst().ProjectDir, str);
+                path = System.IO.Path.Combine(path, result.File);
+                if (System.IO.File.Exists(path))
+                {
+                    IDEEditor editor = ideTabs.OpenFile(new FileLeafItem
+                    {
+                        Path = path,
+                        Name = System.IO.Path.GetFileName(path)
+                    });
+                    if (result.Line != -1)
+                    {
+                        editor.Editor.TextArea.Caret.Line = result.Line;
+                        editor.Editor.ScrollToLine(result.Line);
+                    }
+                    return;
+                }
             }
         }
 

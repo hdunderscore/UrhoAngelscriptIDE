@@ -1,4 +1,5 @@
-﻿using FirstFloor.ModernUI.Windows.Controls;
+﻿using FirstFloor.ModernUI.Presentation;
+using FirstFloor.ModernUI.Windows.Controls;
 using ICSharpCode.AvalonEdit;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,14 @@ namespace Debugger.IDE {
         public IDETabs() {
             InitializeComponent();
             tabs.SelectionChanged += tabs_SelectionChanged;
+            // Ctrl+O to open a file
+            tabs.CommandBindings.Add(new CommandBinding(ApplicationCommands.Open, (sender,o) => { 
+                Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+                dlg.DefaultExt = "*";
+                dlg.Filter = "All files (*.*)|*.*";
+                if (dlg.ShowDialog() == true)
+                    OpenFile(new FileLeafItem { Name = System.IO.Path.GetFileName(dlg.FileName), Path = dlg.FileName });
+            }));
         }
 
         public void SaveAll()
@@ -170,8 +179,12 @@ namespace Debugger.IDE {
             }
         }
 
-        void onCloseTab(object sender, EventArgs e) {
-            TabItem item = ((Grid)((Button)sender).Parent).Parent as TabItem;
+        public void onCloseTab(object sender, EventArgs e) {
+            TabItem item = null;
+            if (sender is TabItem)
+                item = sender as TabItem;
+            else
+                item = ((Grid)((Button)sender).Parent).Parent as TabItem;
             if (item != null) {
                 IDEEditor editor = item.Content as IDEEditor;
                 if (editor != null)

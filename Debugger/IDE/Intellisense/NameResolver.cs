@@ -11,7 +11,8 @@ namespace Debugger.IDE.Intellisense {
     //scan lines upwards looking for lines containing the term
     public class NameResolver {
         static readonly char[] SPACECHAR = { ' ' };
-        static readonly char[] BREAKCHARS = { ' ', '.', ',', '*','/','%','(','{','}',')',';','=','[',']','\t','\r','\n'};
+        static readonly char[] BREAKCHARS = { ' ', '.', ',', '*','/','%','(','{','}',')',';','=','\t','\r','\n'};
+        static readonly char[] BACKSCAN_ALLOW = { '&', '@', '>', '<', ']', '[', ':', ' ' };
         DepthScanner scanner_;
         Globals globals_;
 
@@ -63,9 +64,13 @@ namespace Debugger.IDE.Intellisense {
                 string className = "";
                 if (nameparts[0].Equals("shared"))
                     className = nameparts[2];
+                else if (nameparts[0].Equals("abstract"))
+                    className = nameparts[2];
                 else
-                    className = nameparts[3];
+                    className = nameparts[1];
                 //TODO get baseclasses
+                if (globals_.ContainsTypeInfo(className))
+                    return globals_.GetTypeInfo(className);
                 TypeInfo tempType = new TypeInfo() { Name = className };
                 ++line;
                 do {
@@ -103,12 +108,22 @@ namespace Debugger.IDE.Intellisense {
                 do {
                     string lineCode = aDoc.GetText(aDoc.Lines[line]).Trim();   
                     if (lineCode.Contains(text)) {
+
+                        // Prevent partial matches as false positives, ie. "sceneFile" passing as "scene"
+                        string[] lineTokens = lineCode.Split(BREAKCHARS, StringSplitOptions.RemoveEmptyEntries);
+                        if (!lineTokens.Contains(text))
+                        {
+                            --line;
+                            depth = scanner_.GetBraceDepth(line);
+                            continue;
+                        }
+
                         int endidx = lineCode.IndexOf(text);
                         int idx = endidx;
                         bool okay = true;
                         bool hitSpace = false;
                         while (idx > 0) { //scan backwards to find the typename
-                            if (!char.IsLetterOrDigit(lineCode[idx]) && lineCode[idx] != ' ' && lineCode[idx] != '@' && lineCode[idx] != '&' && lineCode[idx] != ':') {
+                            if (!char.IsLetterOrDigit(lineCode[idx]) && !BACKSCAN_ALLOW.Contains(lineCode[idx])) {
                                 okay = false;
                                 ++idx;
                                 break;
@@ -124,18 +139,34 @@ namespace Debugger.IDE.Intellisense {
                         if (idx < 0) idx = 0;
                         string substr = endidx - idx > 0 ? FilterTypeName(lineCode.Substring(idx, endidx - idx).Trim()) : "";
                         if (substr.Length > 0) { //not empty
-                            if (substr.StartsWith(">")) {//TEMPLATE DEFINITION
-                                if (!indexType)
-                                    substr = lineCode.Substring(0, lineCode.IndexOf('<'));
-                                else {
-                                    int start = lineCode.IndexOf('<');
-                                    int end = lineCode.IndexOf('>');
-                                    substr = lineCode.Substring(start+1, end - start - 1);
-                                    substr = substr.Replace("@", "");
+                            if (substr.Contains(">")) {//TEMPLATE DEFINITION
+                                try
+                                {
+                                    if (!indexType)
+                                        substr = lineCode.Substring(0, lineCode.IndexOf('<'));
+                                    else
+                                    {
+                                        int start = lineCode.IndexOf('<');
+                                        int end = lineCode.IndexOf('>');
+                                        substr = lineCode.Substring(start + 1, end - start - 1);
+                                        substr = substr.Replace("@", "");
+                                    }
                                 }
+                                catch (Exception) { /* silently eat */}
                             }
                             if (globals_.ContainsTypeInfo(substr)) {
                                 //Found a class
+                                if (indexType)
+                                {
+                                    TypeInfo ti = globals_.GetTypeInfo(substr);
+                                    //HACK for Map types
+                                    if (ti.Properties.ContainsKey("values"))
+                                    {
+                                        TypeInfo valueType = ti.Properties["values"];
+                                        if (valueType is TemplateInst)
+                                            return ((TemplateInst)valueType).WrappedType;
+                                    }
+                                }
                                 return globals_.GetTypeInfo(substr);
                             } else if (substr.Contains(':'))
                             {

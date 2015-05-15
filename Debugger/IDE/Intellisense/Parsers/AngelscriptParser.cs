@@ -136,8 +136,8 @@ namespace Debugger.IDE.Intellisense.Parsers
                     for (int i = classTermIdx + 2; i < tokens.Length; ++i)
                     {
                         string baseName = tokens[i];
-                        if (globals.ContainsTypeInfo(baseName))
-                            ti.BaseTypes.Add(globals.GetTypeInfo(baseName));
+                        if (globals.ContainsTypeInfo(baseName.Replace(",","")))
+                            ti.BaseTypes.Add(globals.GetTypeInfo(baseName.Replace(",","")));
                     }
                     ParseClass(rdr, globals, scanner, ti, ref currentLine);
                     globals.AddTypeInfo(className, ti);

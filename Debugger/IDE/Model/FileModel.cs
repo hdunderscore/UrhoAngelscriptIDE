@@ -49,13 +49,20 @@ namespace Debugger.IDE {
                     Watch();
                 watcher_.EnableRaisingEvents = true;
                 children_ = new ObservableCollection<FileBaseItem>();
-                foreach (string file in Directory.EnumerateFileSystemEntries(Path)) {
-                    if (Directory.Exists(file)) {
+                foreach (string file in Directory.EnumerateDirectories(Path))
+                {
+                    if (Directory.Exists(file))
+                    {
                         DirectoryInfo di = new DirectoryInfo(file);
-                        children_.Add(new Folder { Path = file, Name = di.Name, Parent = this } );
-                    } else if (File.Exists(file)) {
+                        children_.Add(new Folder { Path = file, Name = di.Name, Parent = this });
+                    }
+                }
+                foreach (string file in Directory.EnumerateFiles(Path))
+                {
+                    if (File.Exists(file))
+                    {
                         FileInfo fi = new FileInfo(file);
-                        children_.Add(new FileLeafItem { Path = file, Name = fi.Name, Parent=this });
+                        children_.Add(new FileLeafItem { Path = file, Name = fi.Name, Parent = this });
                     }
                 }
                 return children_;

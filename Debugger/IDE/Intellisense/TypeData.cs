@@ -102,6 +102,8 @@ namespace Debugger.IDE.Intellisense
             {
                 string content = str.Extract('[', ']');
                 str = str.Replace(string.Format("[{0}]", content), "");
+                if (!Properties.ContainsKey(str))
+                    return null;
                 TemplateInst ti = Properties[str] as TemplateInst;
                 if (ti != null && path.Length > 1)
                 {
@@ -122,7 +124,17 @@ namespace Debugger.IDE.Intellisense
                 if (path.Length > 1)
                     ti = ti.ResolvePropertyPath(globals, path.SubArray(1, path.Length - 1));
                 return ti;
-            } return null;
+            }
+            else if (BaseTypes.Count > 0) // Check our base classes
+            {
+                foreach (TypeInfo t in BaseTypes)
+                {
+                    BaseTypeInfo ti = t.ResolvePropertyPath(globals, path);
+                    if (ti != null)
+                        return ti;
+                }
+            }
+            return null;
         }
 
         public string Description
@@ -197,6 +209,7 @@ namespace Debugger.IDE.Intellisense
         {
             foreach (FunctionInfo f in Functions)
                 f.ResolveIncompletion(globs);
+            // Properties
             List<string> keys = new List<string>(Properties.Keys);
             foreach (string key in keys)
             {
@@ -204,6 +217,12 @@ namespace Debugger.IDE.Intellisense
                 {
                     Properties[key] = globs.GetTypeInfo(Properties[key].Name);
                 }
+            }
+            // Base types
+            foreach (TypeInfo t in BaseTypes)
+            {
+                if (!t.IsComplete)
+                    t.ResolveIncompletion(globs);
             }
         }
 

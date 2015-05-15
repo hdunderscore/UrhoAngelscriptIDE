@@ -25,6 +25,7 @@ namespace UrhoDocsPlugin
         {
             InitializeComponent();
             tree.PreviewMouseRightButtonDown += tree_PreviewMouseRightButtonDown;
+            RemapAnnotes = new Dictionary<string, string>();
         }
 
         public string[] CommandText { get; set; }
@@ -32,6 +33,8 @@ namespace UrhoDocsPlugin
 
         public string[] CommandFormats { get; set; }
         public string[] LowerCommands { get; set; }
+
+        public Dictionary<string, string> RemapAnnotes { get; set; }
 
         private void tree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -69,7 +72,15 @@ namespace UrhoDocsPlugin
                                 {
                                     string txt = FmtText[idx];
                                     if (os.Text.Contains(":"))
-                                        System.Windows.Clipboard.SetText(string.Format(txt, os.Text.Substring(0, os.Text.IndexOf(":")).Trim()));
+                                    {
+                                        string annote = os.Text.Substring(os.Text.IndexOf(':') + 2);
+                                        if (annote.Contains("pointer")) //pointers are a special case
+                                            System.Windows.Clipboard.SetText(string.Format(txt, os.Text.Substring(0, os.Text.IndexOf(":")).Trim(), RemapAnnotes["pointer"]));
+                                        else if (RemapAnnotes.ContainsKey(annote))
+                                            System.Windows.Clipboard.SetText(string.Format(txt, os.Text.Substring(0, os.Text.IndexOf(":")).Trim(), RemapAnnotes[annote]));
+                                        else
+                                            System.Windows.Clipboard.SetText(string.Format(txt, os.Text.Substring(0, os.Text.IndexOf(":")).Trim(), ""));
+                                    }
                                     else
                                         System.Windows.Clipboard.SetText(string.Format(txt, os.Text.Trim()));
                                 })

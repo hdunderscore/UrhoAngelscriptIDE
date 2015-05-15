@@ -15,6 +15,7 @@ namespace UrhoDocsPlugin.API
 
     public class APILeaf : APINode
     {
+        public string TypeAnnote { get; set; }
     }
 
     public class APINode : PluginLib.BasePropertyBound
@@ -156,6 +157,10 @@ namespace UrhoDocsPlugin.API
                     else if (line.StartsWith("- "))
                     {
                         APILeaf leaf = new APILeaf { Name = line.Replace("- ", "").Replace("%", "") };
+                        if (leaf.Name.Contains(":"))
+                        {
+                            leaf.TypeAnnote = leaf.Name.Substring(leaf.Name.IndexOf(':') + 2);
+                        }
                         lastSubsection.Children.Add(leaf);
                         leaf.Parent = lastSubsection;
                     }

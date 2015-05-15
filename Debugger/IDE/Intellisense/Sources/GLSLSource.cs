@@ -9,6 +9,7 @@ using System.Windows.Input;
 
 namespace Debugger.IDE.Intellisense.Sources
 {
+    [IntelSourceDescriptor(Ext = ".glsl")]
     public class GLSLSource : SourceBase
     {
         static Globals GLSLGlobals;

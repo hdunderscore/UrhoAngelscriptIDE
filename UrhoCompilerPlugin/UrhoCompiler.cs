@@ -33,24 +33,26 @@ namespace UrhoCompilerPlugin
                 string path = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
                 path = Path.Combine(path, "bin");
                 path = Path.Combine(path, "ScriptCompiler.exe");
-                
+
+                foreach (string s in compileErrorPublisher.GetIncludeDirs())
+                    file = String.Format(file + " {0}", s);
+
                 Process pi = new Process();
                 pi.StartInfo.FileName = path;
                 pi.StartInfo.Arguments = file;
                 pi.EnableRaisingEvents = true;
+                pi.StartInfo.WorkingDirectory = compileErrorPublisher.GetProjectDirectory();
                 pi.StartInfo.UseShellExecute = false;
                 pi.StartInfo.CreateNoWindow = true;
-                pi.StartInfo.RedirectStandardOutput = true;
                 pi.ErrorDataReceived += pi_ErrorDataReceived;
+                pi.OutputDataReceived += pi_OutputDataReceived;
+                pi.StartInfo.RedirectStandardError = true;
+                pi.StartInfo.RedirectStandardOutput = true;
                 pi.Start();
+                pi.BeginOutputReadLine();
+                pi.BeginErrorReadLine();
                 pi.WaitForExit();
 
-                string str = "";
-                while ((str = pi.StandardOutput.ReadLine()) != null)
-                {
-                    if (ProcessLine(str, compileErrorPublisher, errorPublisher))
-                        pushedError = true;
-                }
                 if (pushedError)
                     compileErrorPublisher.PushOutput(String.Format("Compiling {0} Failed\r\n", file));
                 else
@@ -70,8 +72,16 @@ namespace UrhoCompilerPlugin
                 pushedError = true;
         }
 
+        void pi_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (ProcessLine(e.Data, compileErrorPublisher, errorPublisher))
+                pushedError = true;
+        }
+
         public static bool ProcessLine(string str, PluginLib.ICompileHelper compileErrorPublisher, PluginLib.IErrorPublisher errorPublisher)
         {
+            if (str == null)
+                return false;
             compileErrorPublisher.PushOutput(str + "\r\n");
             bool isError = false;
             bool isWarning = false;

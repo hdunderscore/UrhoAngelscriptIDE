@@ -148,6 +148,11 @@ namespace Debugger.IDE {
         {
             return Settings.SourceTree;
         }
+
+        public string[] GetIncludeDirs()
+        {
+            return Settings.IncludePaths.Split(new char[] { ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        }
     }
 
 }

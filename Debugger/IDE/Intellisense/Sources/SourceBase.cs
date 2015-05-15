@@ -92,7 +92,7 @@ namespace Debugger.IDE.Intellisense.Sources
                 NameResolver reso = new NameResolver(GetGlobals(), scanner);
                 BaseTypeInfo info = null;
                 string[] words = IntellisenseHelper.DotPath(editor.Document, curOfs - 1, line - 1);
-                if (words.Length > 1)
+                if (words.Length > 0)
                 {
                     for (int i = 0; i < words.Length; ++i)
                     {
@@ -191,9 +191,29 @@ namespace Debugger.IDE.Intellisense.Sources
                                 ti.ReadonlyProperties.Contains(str) ? PropertyAccess.Readonly :
                                 (ti.ProtectedProperties.Contains(str) ? PropertyAccess.Protected : PropertyAccess.Public)));
                         }
+                        foreach (TypeInfo t in ti.BaseTypes)
+                        {
+                            foreach (string str in t.Properties.Keys)
+                            {
+                                if (!t.PrivateProperties.Contains(str))
+                                {
+                                    data.Add(new PropertyCompletionData(t.Properties[str], str,
+                                        t.ReadonlyProperties.Contains(str) ? PropertyAccess.Readonly :
+                                        (t.ProtectedProperties.Contains(str) ? PropertyAccess.Protected : PropertyAccess.Public)));
+                                }
+                            }
+                        }
                     }
                     foreach (FunctionInfo fi in ti.Functions)
                         data.Add(new FunctionCompletionData(fi));
+                    foreach (TypeInfo t in ti.BaseTypes)
+                    {
+                        foreach (FunctionInfo fi in t.Functions)
+                        {
+                            if (!fi.IsPrivate)
+                                data.Add(new FunctionCompletionData(fi));
+                        }
+                    }
                     currentComp.Show();
                     currentComp.Closed += comp_Closed;
                 }
@@ -248,7 +268,7 @@ namespace Debugger.IDE.Intellisense.Sources
                 else if (func == null && info == null) // Found nothing
                 {
                     List<FunctionInfo> data = new List<FunctionInfo>();
-                    foreach (FunctionInfo fi in GetGlobals().GetFunctions(words[1], true))
+                    foreach (FunctionInfo fi in GetGlobals().GetFunctions(words[0], true))
                         data.Add(fi);
                     if (data.Count > 0)
                     {
@@ -289,7 +309,7 @@ namespace Debugger.IDE.Intellisense.Sources
 
                 NameResolver reso = new NameResolver(GetGlobals(), scanner);
                 List<string> suggestions = new List<string>();
-                reso.GetNameMatch(editor.Document, editor.TextArea.Caret.Line - 1, word, ref suggestions);
+                reso.GetNameMatch(editor.Document, editor.TextArea.Caret.Line - 2, word, ref suggestions);
 
                 CompletionWindow compWindow = new CompletionWindow(editor.TextArea);
                 compWindow.StartOffset = TextUtilities.GetNextCaretPosition(editor.Document, curOfs, LogicalDirection.Backward, CaretPositioningMode.WordStart);
@@ -319,6 +339,10 @@ namespace Debugger.IDE.Intellisense.Sources
                     currentComp = compWindow;
                     currentComp.Show();
                     currentComp.Closed += comp_Closed;
+                }
+                else if (currentComp != null)
+                {
+                    currentComp.Close();
                 }
             }
         }

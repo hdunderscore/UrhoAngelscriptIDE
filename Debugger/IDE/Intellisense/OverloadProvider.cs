@@ -31,13 +31,13 @@ namespace Debugger.IDE.Intellisense {
                 {
                     string docName = source.Name + "::" + functions_[SelectedIndex].Name + functions_[SelectedIndex].Inner;
                     string docText = IDEProject.inst().DocDatabase.GetDocumentationFor(docName);
-                    if (docText != null)
-                        return new TextBlock { Text = docText };
+                    
                     StackPanel stck = new StackPanel { Orientation = Orientation.Horizontal };
-                    stck.Children.Add(new TextBlock { Text = "Undocumented" });
+                    stck.Children.Add(new TextBlock { Text = docText != null ? docText : "Undocumented", Margin = new System.Windows.Thickness(3) });
                     Button docBtn = new Button { Content = "Document" };
                     docBtn.Click += docBtn_Click;
                     stck.Children.Add(docBtn);
+
                     return stck;
                 }
                 else
@@ -72,11 +72,18 @@ namespace Debugger.IDE.Intellisense {
 
         // Header appears to the right, show number of overloads
         public object CurrentHeader {
-            get { return (SelectedIndex+1) + " of " + functions_.Count; }
+            get { 
+                if (functions_.Count == 1)
+                    return string.Format("{0}{1}\r\n", functions_[SelectedIndex].Name, functions_[SelectedIndex].Inner);
+                return (SelectedIndex+1) + " of " + functions_.Count; 
+            }
         }
 
         public string CurrentIndexText {
-            get { return string.Format("{0}{1}\r\n", functions_[SelectedIndex].Name, functions_[SelectedIndex].Inner); }
+            get { 
+                string ret = string.Format("{0}{1}\r\n", functions_[SelectedIndex].Name, functions_[SelectedIndex].Inner);
+                return ret;
+            }
         }
 
         public int SelectedIndex {

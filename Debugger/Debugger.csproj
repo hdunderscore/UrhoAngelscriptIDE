@@ -148,8 +148,12 @@
     <Compile Include="IDE\Intellisense\Sources\AngelscriptSource.cs" />
     <Compile Include="IDE\Intellisense\Sources\GLSLSource.cs" />
     <Compile Include="IDE\Intellisense\Sources\HLSLSource.cs" />
+    <Compile Include="IDE\Intellisense\Sources\IntelSourceDescriptor.cs" />
+    <Compile Include="IDE\Intellisense\Sources\LuaSource.cs" />
+    <Compile Include="IDE\Intellisense\Sources\NullSource.cs" />
     <Compile Include="IDE\Intellisense\Sources\SourceBase.cs" />
     <Compile Include="IDE\Intellisense\Sources\SourceBuilder.cs" />
+    <Compile Include="IDE\Intellisense\Sources\XmlSource.cs" />
     <Compile Include="IDE\Intellisense\TypeData.cs" />
     <Compile Include="IDE\Model\FileModel.cs" />
     <Compile Include="IDE\IDEDashboard.xaml.cs">

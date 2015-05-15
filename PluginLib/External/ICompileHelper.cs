@@ -10,6 +10,7 @@ namespace PluginLib
     {
         void PublishError(CompileError error);
         void PushOutput(string text);
+        string[] GetIncludeDirs();
         string GetProjectDirectory();
         string GetProjectSourceTree();
     }
