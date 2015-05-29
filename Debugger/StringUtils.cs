@@ -19,5 +19,12 @@ namespace Debugger {
             System.Array.Copy(data, index, result, 0, length);
             return result;
         }
+
+        public static string ToSpaceQuoted(this string str)
+        {
+            if (str.Contains(' '))
+                return String.Format("\"{0}\"", str);
+            return str;
+        }
     }
 }

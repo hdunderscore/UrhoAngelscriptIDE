@@ -34,8 +34,11 @@ namespace UrhoCompilerPlugin
                 path = Path.Combine(path, "bin");
                 path = Path.Combine(path, "ScriptCompiler.exe");
 
+                // Check for spaces in paths and quote any paths that need to be quoted
+                if (file.Contains(' '))
+                    file = String.Format("\"{0}\"", file);
                 foreach (string s in compileErrorPublisher.GetIncludeDirs())
-                    file = String.Format(file + " {0}", s);
+                    file = String.Format(file + " {1}{0}{1}", s, s.Contains(' ') ? "\"" : "");
 
                 Process pi = new Process();
                 pi.StartInfo.FileName = path;

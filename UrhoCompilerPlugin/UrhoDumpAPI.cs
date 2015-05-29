@@ -27,6 +27,10 @@ namespace UrhoCompilerPlugin
             if (sourceTree != null && sourceTree.Length > 0)
                 parentDir = sourceTree;
 
+            // Quote spaces if necessary
+            if (parentDir.Contains(' '))
+                parentDir = String.Format("\"{0}\"", parentDir);
+
             Thread thread = new Thread(delegate()
             {
                 //Thread thread = new Thread(delegate() {

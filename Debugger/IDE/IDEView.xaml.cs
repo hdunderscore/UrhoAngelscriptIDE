@@ -353,7 +353,7 @@ namespace Debugger.IDE {
             }
             Process pi = new Process();
             pi.StartInfo.FileName = IDEProject.inst().Settings.RunExe;
-            pi.StartInfo.Arguments = IDEProject.inst().Settings.CompilerPath + " " + IDEProject.inst().Settings.RunParams;
+            pi.StartInfo.Arguments = IDEProject.inst().Settings.CompilerPath.ToSpaceQuoted() + " " + IDEProject.inst().Settings.RunParams;
             pi.EnableRaisingEvents = true;
             pi.StartInfo.UseShellExecute = false;
             pi.StartInfo.CreateNoWindow = false;
@@ -370,7 +370,7 @@ namespace Debugger.IDE {
             }
             Process pi = new Process();
             pi.StartInfo.FileName = IDEProject.inst().Settings.DebugExe;
-            pi.StartInfo.Arguments = IDEProject.inst().Settings.CompilerPath + " " + IDEProject.inst().Settings.DebugParams;
+            pi.StartInfo.Arguments = IDEProject.inst().Settings.CompilerPath.ToSpaceQuoted() + " " + IDEProject.inst().Settings.DebugParams;
             pi.EnableRaisingEvents = true;
             pi.StartInfo.UseShellExecute = false;
             pi.StartInfo.CreateNoWindow = false;

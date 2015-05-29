@@ -49,13 +49,22 @@ namespace UrhoCompilerPlugin
                 int ct = 0;
                 foreach (string f in compileList)
                 {
+                    // Quote spaces if necessary
+                    string cmdLine = f;
+                    if (cmdLine.Contains(' '))
+                        cmdLine = String.Format("\"{0}\"", cmdLine);
+
+                    // Append include directories, quoting any space containing paths
+                    foreach (string s in compileErrorPublisher.GetIncludeDirs())
+                        cmdLine = String.Format(file + " {1}{0}{1}", s, s.Contains(' ') ? "\"" : "");
+
                     ++ct;
                     compileErrorPublisher.PushOutput("────────────────────────────────────────────────────\r\n");
                     compileErrorPublisher.PushOutput(String.Format("Compiling: {0}\r\n", f, ct));
                     compileErrorPublisher.PushOutput(String.Format("{0} of {1}\r\n", ct, compileList.Count));
                     Process pi = new Process();
                     pi.StartInfo.FileName = path;
-                    pi.StartInfo.Arguments = f;
+                    pi.StartInfo.Arguments = cmdLine;
                     pi.EnableRaisingEvents = true;
                     pi.StartInfo.UseShellExecute = false;
                     pi.StartInfo.CreateNoWindow = true;
