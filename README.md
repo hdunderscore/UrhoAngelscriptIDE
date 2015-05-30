@@ -119,8 +119,6 @@ into the IDE where it is parsed to scan for error messages.
 
 After a successful compilation the script compiler will be used again in order to generate Latex documentation dumps and a header file for the script types. The IDE will parse these files to generate documentation and class hierarchies.
 
-**It's recommended to modify your scriptcompiler to generate the dump files AFTER first compiling the code.** This way the header dump will contain definitions for the script classes, functions, and variables found in your files.
-
 # Debugger Functionality
 
 ### Connections
