@@ -100,11 +100,11 @@ namespace UrhoCompilerPlugin
             }
             if (isError || isWarning)
             {
-                string[] words = str.Split(' '); //split on spaces
-                int colonIndex = words[0].LastIndexOf(':');
-                if (colonIndex == -1)
+                int sPos = str.IndexOf(": ");
+                int colonIndex = str.LastIndexOf(':');
+                if (colonIndex == -1 || colonIndex == sPos)
                     return false; //don't count this as an error
-                string fileName = words[0].Substring(0, colonIndex);
+                string fileName = str.Substring(sPos+1, colonIndex);
 
                 string part = "";
                 int line = -1;
@@ -124,7 +124,7 @@ namespace UrhoCompilerPlugin
                         break;
                     part += str[colonIndex];
                 }
-                string msg = String.Join(" ", words, 1, words.Length - 1); // str.Substring(colonIndex);
+                string msg = str.Substring(colonIndex+1);
                 PluginLib.CompileError error = new PluginLib.CompileError
                 {
                     File = fileName,

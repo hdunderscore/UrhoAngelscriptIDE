@@ -66,23 +66,18 @@ namespace UrhoCompilerPlugin
                     pi.StartInfo.FileName = path;
                     pi.StartInfo.Arguments = cmdLine;
                     pi.EnableRaisingEvents = true;
+                    pi.StartInfo.WorkingDirectory = compileErrorPublisher.GetProjectDirectory();
                     pi.StartInfo.UseShellExecute = false;
                     pi.StartInfo.CreateNoWindow = true;
+                    pi.StartInfo.RedirectStandardError = true;
                     pi.StartInfo.RedirectStandardOutput = true;
                     pi.ErrorDataReceived += pi_ErrorDataReceived;
+                    pi.OutputDataReceived += pi_OutputDataReceived;
                     pi.Start();
+                    pi.BeginErrorReadLine();
+                    pi.BeginOutputReadLine();
                     pi.WaitForExit();
 
-                    string str = "";
-                    pushedError = false;
-                    while ((str = pi.StandardOutput.ReadLine()) != null)
-                    {
-                        if (UrhoCompiler.ProcessLine(str, compileErrorPublisher, errorPublisher))
-                        {
-                            pushedError = true;
-                            ++errorsPushed;
-                        }
-                    }
                     if (pushedError) {
                         compileErrorPublisher.PushOutput(String.Format("Compiling {0} Failed\r\n", f));
                     } else {
@@ -95,6 +90,14 @@ namespace UrhoCompilerPlugin
             catch (Exception ex)
             {
                 errorPublisher.PublishError(ex);
+            }
+        }
+
+        void pi_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (UrhoCompiler.ProcessLine(e.Data, compileErrorPublisher, errorPublisher))
+            {
+                pushedError = true;
             }
         }
 

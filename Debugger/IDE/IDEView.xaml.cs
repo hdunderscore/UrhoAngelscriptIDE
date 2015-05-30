@@ -263,23 +263,18 @@ namespace Debugger.IDE {
         private void errorDoubleClick(object sender, MouseEventArgs args) {
             DataGridRow row = sender as DataGridRow;
             PluginLib.CompileError result = row.DataContext as PluginLib.CompileError;
-            foreach (string str in IDEProject.inst().GetIncludeDirs())
+
+            if (System.IO.File.Exists(result.File))
             {
-                string path = System.IO.Path.Combine(IDEProject.inst().ProjectDir, str);
-                path = System.IO.Path.Combine(path, result.File);
-                if (System.IO.File.Exists(path))
+                IDEEditor editor = ideTabs.OpenFile(new FileLeafItem
                 {
-                    IDEEditor editor = ideTabs.OpenFile(new FileLeafItem
-                    {
-                        Path = path,
-                        Name = System.IO.Path.GetFileName(path)
-                    });
-                    if (result.Line != -1)
-                    {
-                        editor.Editor.TextArea.Caret.Line = result.Line;
-                        editor.Editor.ScrollToLine(result.Line);
-                    }
-                    return;
+                    Path = result.File,
+                    Name = System.IO.Path.GetFileName(result.File)
+                });
+                if (editor != null && result.Line != -1)
+                {
+                    editor.Editor.TextArea.Caret.Line = result.Line;
+                    editor.Editor.ScrollToLine(result.Line);
                 }
             }
         }
@@ -355,6 +350,7 @@ namespace Debugger.IDE {
             pi.StartInfo.FileName = IDEProject.inst().Settings.RunExe;
             pi.StartInfo.Arguments = IDEProject.inst().Settings.CompilerPath.ToSpaceQuoted() + " " + IDEProject.inst().Settings.RunParams;
             pi.EnableRaisingEvents = true;
+            pi.StartInfo.WorkingDirectory = IDEProject.inst().Settings.ProjectPath;
             pi.StartInfo.UseShellExecute = false;
             pi.StartInfo.CreateNoWindow = false;
             pi.StartInfo.RedirectStandardOutput = false;
@@ -372,6 +368,7 @@ namespace Debugger.IDE {
             pi.StartInfo.FileName = IDEProject.inst().Settings.DebugExe;
             pi.StartInfo.Arguments = IDEProject.inst().Settings.CompilerPath.ToSpaceQuoted() + " " + IDEProject.inst().Settings.DebugParams;
             pi.EnableRaisingEvents = true;
+            pi.StartInfo.WorkingDirectory = IDEProject.inst().Settings.ProjectPath;
             pi.StartInfo.UseShellExecute = false;
             pi.StartInfo.CreateNoWindow = false;
             pi.StartInfo.RedirectStandardOutput = false;
