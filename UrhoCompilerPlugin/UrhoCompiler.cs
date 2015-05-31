@@ -101,8 +101,10 @@ namespace UrhoCompilerPlugin
             if (isError || isWarning)
             {
                 int sPos = str.IndexOf(": ");
-                int colonIndex = str.LastIndexOf(':');
-                if (colonIndex == -1 || colonIndex == sPos)
+                int driveIndex = str.IndexOf(':', sPos + 1);
+                int colonIndex = str.IndexOf(':', driveIndex + 1);
+                
+                if (colonIndex == -1)
                     return false; //don't count this as an error
                 string fileName = str.Substring(sPos+1, colonIndex);
 
